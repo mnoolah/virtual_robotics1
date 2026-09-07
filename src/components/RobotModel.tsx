@@ -1,5 +1,6 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
+import type { ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { robotParts } from '../data/robotParts'
 
@@ -15,10 +16,11 @@ type Props = {
 export function RobotModel({ activePart, onSelect }: Props) {
   const group = useRef<THREE.Group>(null)
   const eyeGlow = useRef<THREE.Mesh>(null)
+  const [hovered, setHovered] = useState<string | null>(null)
 
   useFrame((state) => {
     if (group.current) {
-      group.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.15) * 0.35 + state.clock.elapsedTime * 0.05
+      // idle "breathing" bob only — rotation is left entirely to the user via OrbitControls
       group.current.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.04
     }
     if (eyeGlow.current) {
@@ -27,17 +29,28 @@ export function RobotModel({ activePart, onSelect }: Props) {
     }
   })
 
+  const hoverHandlers = (id: string) => ({
+    onPointerOver: (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation()
+      setHovered(id)
+      document.body.style.cursor = 'pointer'
+    },
+    onPointerOut: (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation()
+      setHovered((h) => (h === id ? null : h))
+      document.body.style.cursor = 'auto'
+    },
+    onClick: (e: ThreeEvent<MouseEvent>) => {
+      e.stopPropagation()
+      onSelect(id)
+    },
+  })
+
   return (
     <group ref={group} position={[0, -0.4, 0]}>
       {/* head / processor */}
-      <group
-        position={[0, 1.55, 0]}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect('processor')
-        }}
-      >
-        <mesh castShadow {...pulse(activePart === 'processor')}>
+      <group position={[0, 1.55, 0]} {...hoverHandlers('processor')}>
+        <mesh castShadow {...pulse(activePart === 'processor', hovered === 'processor')}>
           <boxGeometry args={[0.62, 0.5, 0.6]} />
           <meshStandardMaterial {...metal} />
         </mesh>
@@ -60,11 +73,8 @@ export function RobotModel({ activePart, onSelect }: Props) {
       <mesh
         ref={eyeGlow}
         position={[0.32, 1.48, 0.62]}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect('sensor-eye')
-        }}
-        {...pulse(activePart === 'sensor-eye')}
+        {...hoverHandlers('sensor-eye')}
+        {...pulse(activePart === 'sensor-eye', hovered === 'sensor-eye')}
       >
         <sphereGeometry args={[0.09, 16, 16]} />
         <meshStandardMaterial color="#3a8fb7" emissive="#3a8fb7" emissiveIntensity={1.4} />
@@ -93,25 +103,16 @@ export function RobotModel({ activePart, onSelect }: Props) {
       {/* battery pack (back) */}
       <mesh
         position={[0, 0.55, -0.3]}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect('battery')
-        }}
-        {...pulse(activePart === 'battery')}
+        {...hoverHandlers('battery')}
+        {...pulse(activePart === 'battery', hovered === 'battery')}
       >
         <boxGeometry args={[0.4, 0.28, 0.12]} />
         <meshStandardMaterial color="#4a7c59" metalness={0.4} roughness={0.4} />
       </mesh>
 
       {/* right arm */}
-      <group
-        position={[0.5, 1.05, 0]}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect('arm')
-        }}
-      >
-        <mesh {...pulse(activePart === 'arm')}>
+      <group position={[0.5, 1.05, 0]} {...hoverHandlers('arm')}>
+        <mesh {...pulse(activePart === 'arm', hovered === 'arm')}>
           <cylinderGeometry args={[0.09, 0.09, 0.5, 12]} />
           <meshStandardMaterial {...metal} />
         </mesh>
@@ -126,11 +127,8 @@ export function RobotModel({ activePart, onSelect }: Props) {
       </group>
       <mesh
         position={[0.5, 1.28, 0]}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect('servo')
-        }}
-        {...pulse(activePart === 'servo')}
+        {...hoverHandlers('servo')}
+        {...pulse(activePart === 'servo', hovered === 'servo')}
       >
         <sphereGeometry args={[0.11, 16, 16]} />
         <meshStandardMaterial color="#c98a2c" metalness={0.5} roughness={0.3} />
@@ -163,14 +161,8 @@ export function RobotModel({ activePart, onSelect }: Props) {
       </mesh>
 
       {/* legs / wheels base */}
-      <group
-        position={[0, 0, 0]}
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect('base')
-        }}
-      >
-        <mesh position={[0.18, 0.05, 0]} {...pulse(activePart === 'base')}>
+      <group position={[0, 0, 0]} {...hoverHandlers('base')}>
+        <mesh position={[0.18, 0.05, 0]} {...pulse(activePart === 'base', hovered === 'base')}>
           <cylinderGeometry args={[0.11, 0.11, 0.28, 16]} />
           <meshStandardMaterial {...metal} />
         </mesh>
@@ -193,20 +185,26 @@ export function RobotModel({ activePart, onSelect }: Props) {
       </group>
 
       {/* decorative marker dots for each part */}
-      {robotParts.map((p) => (
-        <mesh key={p.id} position={p.markerPosition}>
-          <sphereGeometry args={[activePart === p.id ? 0.045 : 0.03, 12, 12]} />
-          <meshStandardMaterial
-            color={p.color}
-            emissive={p.color}
-            emissiveIntensity={activePart === p.id ? 2 : 1}
-          />
-        </mesh>
-      ))}
+      {robotParts.map((p) => {
+        const isActive = activePart === p.id
+        const isHovered = hovered === p.id
+        return (
+          <mesh key={p.id} position={p.markerPosition}>
+            <sphereGeometry args={[isActive ? 0.045 : isHovered ? 0.038 : 0.03, 12, 12]} />
+            <meshStandardMaterial
+              color={p.color}
+              emissive={p.color}
+              emissiveIntensity={isActive ? 2 : isHovered ? 1.5 : 1}
+            />
+          </mesh>
+        )
+      })}
     </group>
   )
 }
 
-function pulse(active: boolean): { scale?: number } {
-  return active ? { scale: 1.08 } : {}
+function pulse(active: boolean, hovered: boolean): { scale?: number } {
+  if (active) return { scale: 1.08 }
+  if (hovered) return { scale: 1.04 }
+  return {}
 }

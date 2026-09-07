@@ -1,18 +1,36 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { ContactShadows, OrbitControls } from '@react-three/drei'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import { RobotModel } from './components/RobotModel'
 import { PartLabel } from './components/PartLabel'
 import { AnnotationLines } from './components/AnnotationLines'
 import { InfoPanel } from './components/InfoPanel'
+import { CameraRig } from './components/CameraRig'
 import { robotParts } from './data/robotParts'
 
 function App() {
   const [activePart, setActivePart] = useState<string | null>(null)
+  const [autoRotate, setAutoRotate] = useState(true)
+  const controlsRef = useRef<OrbitControlsImpl | null>(null)
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const selected = robotParts.find((p) => p.id === activePart) ?? null
 
   const toggle = (id: string) => setActivePart((cur) => (cur === id ? null : id))
+
+  const pauseAutoRotate = () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current)
+    setAutoRotate(false)
+  }
+  const scheduleResume = () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current)
+    resumeTimer.current = setTimeout(() => setAutoRotate(true), 4000)
+  }
+
+  useEffect(() => () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current)
+  }, [])
 
   return (
     <div className="relative h-screen w-screen overflow-hidden">
@@ -24,7 +42,7 @@ function App() {
           </span>
           <h1 className="text-lg font-black text-[var(--ink)] md:text-xl">الروبوت</h1>
           <p className="text-xs text-[var(--ink-soft)] md:text-sm">
-            نظام التحكم والاستشعار الآلي
+            نظام التحكم والاستشعار الآلي — اسحب للتدوير، واضغط على أي جزء
           </p>
         </div>
       </header>
@@ -47,15 +65,20 @@ function App() {
 
         <ContactShadows position={[0, -0.82, 0]} opacity={0.35} scale={6} blur={2.4} far={2} />
 
+        <CameraRig activePart={activePart} controlsRef={controlsRef} />
+
         <OrbitControls
-          target={[0, 0.85, 0]}
+          ref={controlsRef}
+          makeDefault
           enablePan={false}
-          minDistance={2.8}
+          minDistance={1.6}
           maxDistance={6}
           minPolarAngle={Math.PI / 4}
           maxPolarAngle={Math.PI / 1.7}
-          autoRotate
+          autoRotate={autoRotate}
           autoRotateSpeed={0.6}
+          onStart={pauseAutoRotate}
+          onEnd={scheduleResume}
         />
 
         <EffectComposer>
@@ -72,13 +95,34 @@ function App() {
         ))}
       </div>
 
-      {/* footer nav pills */}
-      <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 gap-2 md:flex">
+      {/* control toolbar */}
+      <div className="pointer-events-none absolute top-1/2 right-3 z-20 flex -translate-y-1/2 flex-col gap-2 md:right-6">
         <button
-          onClick={() => setActivePart(null)}
-          className="pointer-events-auto rounded-full border border-[var(--panel-border)] bg-[var(--panel)] px-4 py-2 text-sm font-medium text-[var(--ink)] shadow-sm backdrop-blur-xl transition hover:bg-white/90"
+          onClick={() => {
+            setActivePart(null)
+            pauseAutoRotate()
+            scheduleResume()
+          }}
+          title="إعادة الضبط"
+          aria-label="إعادة الضبط"
+          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-[var(--panel-border)] bg-[var(--panel)] text-lg text-[var(--ink)] shadow-sm backdrop-blur-xl transition hover:scale-105 hover:bg-white/90"
         >
-          إعادة الضبط
+          ⟲
+        </button>
+        <button
+          onClick={() => {
+            if (resumeTimer.current) clearTimeout(resumeTimer.current)
+            setAutoRotate((v) => !v)
+          }}
+          title={autoRotate ? 'إيقاف التدوير التلقائي' : 'تشغيل التدوير التلقائي'}
+          aria-label="تبديل التدوير التلقائي"
+          className={`pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border text-lg shadow-sm backdrop-blur-xl transition hover:scale-105 ${
+            autoRotate
+              ? 'border-transparent bg-[var(--accent)] text-white'
+              : 'border-[var(--panel-border)] bg-[var(--panel)] text-[var(--ink)] hover:bg-white/90'
+          }`}
+        >
+          ⟳
         </button>
       </div>
 
