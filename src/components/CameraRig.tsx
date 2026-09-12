@@ -2,15 +2,15 @@ import { useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { robotParts } from '../data/robotParts'
+import { heartParts } from '../data/heartParts'
 
-const DEFAULT_TARGET = new THREE.Vector3(0, 0.85, 0)
-const DEFAULT_CAMERA_POS = new THREE.Vector3(2.9, 1.9, 4.3)
-const FOCUS_DISTANCE = 2.1
-const GROUP_Y_OFFSET = -0.4
+const DEFAULT_TARGET = new THREE.Vector3(0, 0.15, 0)
+const DEFAULT_CAMERA_POS = new THREE.Vector3(2.5, 1.7, 3.7)
+const FOCUS_DISTANCE = 1.6
+const GROUP_Y_OFFSET = -0.15
 
 const worldPositions = new Map(
-  robotParts.map((p) => [
+  heartParts.map((p) => [
     p.id,
     new THREE.Vector3(p.markerPosition[0], p.markerPosition[1] + GROUP_Y_OFFSET, p.markerPosition[2]),
   ]),

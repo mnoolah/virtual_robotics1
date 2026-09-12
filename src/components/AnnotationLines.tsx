@@ -1,4 +1,4 @@
-import { robotParts } from '../data/robotParts'
+import { heartParts } from '../data/heartParts'
 
 const anchor = { x: 50, y: 52 }
 
@@ -9,7 +9,7 @@ export function AnnotationLines({ activePart }: { activePart: string | null }) {
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
     >
-      {robotParts.map((p) => {
+      {heartParts.map((p) => {
         const x = parseFloat(p.labelPosition.left)
         const y = parseFloat(p.labelPosition.top)
         const midX = (x + anchor.x) / 2 + (x > anchor.x ? 6 : -6)

@@ -1,7 +1,7 @@
-import type { RobotPart } from '../data/robotParts'
+import type { HeartPart } from '../data/heartParts'
 
 type Props = {
-  part: RobotPart | null
+  part: HeartPart | null
   onClose: () => void
 }
 

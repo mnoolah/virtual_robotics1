@@ -3,19 +3,22 @@ import { Canvas } from '@react-three/fiber'
 import { ContactShadows, OrbitControls } from '@react-three/drei'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
-import { RobotModel } from './components/RobotModel'
+import { HeartModel } from './components/HeartModel'
 import { PartLabel } from './components/PartLabel'
 import { AnnotationLines } from './components/AnnotationLines'
 import { InfoPanel } from './components/InfoPanel'
 import { CameraRig } from './components/CameraRig'
-import { robotParts } from './data/robotParts'
+import { SoundControls } from './components/SoundControls'
+import { heartParts } from './data/heartParts'
+import { useHeartAudio } from './hooks/useHeartAudio'
 
 function App() {
   const [activePart, setActivePart] = useState<string | null>(null)
   const [autoRotate, setAutoRotate] = useState(true)
   const controlsRef = useRef<OrbitControlsImpl | null>(null)
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const selected = robotParts.find((p) => p.id === activePart) ?? null
+  const selected = heartParts.find((p) => p.id === activePart) ?? null
+  const { heartbeatOn, musicOn, toggleHeartbeat, toggleMusic } = useHeartAudio()
 
   const toggle = (id: string) => setActivePart((cur) => (cur === id ? null : id))
 
@@ -38,17 +41,17 @@ function App() {
       <header className="pointer-events-none absolute top-0 left-0 z-20 w-full px-4 pt-4 md:px-8 md:pt-6">
         <div className="pointer-events-auto inline-flex flex-col rounded-2xl border border-[var(--panel-border)] bg-[var(--panel)] px-4 py-3 shadow-sm backdrop-blur-xl">
           <span className="text-[10px] font-semibold tracking-widest text-[var(--accent)] uppercase">
-            INTERACTIVE ROBOTICS
+            INTERACTIVE ANATOMY
           </span>
-          <h1 className="text-lg font-black text-[var(--ink)] md:text-xl">الروبوت</h1>
+          <h1 className="text-lg font-black text-[var(--ink)] md:text-xl">قلب الإنسان</h1>
           <p className="text-xs text-[var(--ink-soft)] md:text-sm">
-            نظام التحكم والاستشعار الآلي — اسحب للتدوير، واضغط على أي جزء
+            مجسم تفاعلي ينبض — اسحب للتدوير، وقرّب أو ابعّد، واضغط على أي جزء لمعرفة وظيفته
           </p>
         </div>
       </header>
 
       {/* canvas */}
-      <Canvas shadows camera={{ position: [2.9, 1.9, 4.3], fov: 38 }} className="!absolute inset-0">
+      <Canvas shadows camera={{ position: [2.5, 1.7, 3.7], fov: 38 }} className="!absolute inset-0">
         <color attach="background" args={['#f3e2da']} />
         <fog attach="fog" args={['#f3e2da', 6, 12]} />
         <ambientLight intensity={0.6} />
@@ -61,9 +64,9 @@ function App() {
         <directionalLight position={[-3, 2, -2]} intensity={0.5} color="#8b2f5e" />
         <pointLight position={[0, 1.6, 1.4]} intensity={0.6} color="#3a8fb7" />
 
-        <RobotModel activePart={activePart} onSelect={toggle} />
+        <HeartModel activePart={activePart} onSelect={toggle} />
 
-        <ContactShadows position={[0, -0.82, 0]} opacity={0.35} scale={6} blur={2.4} far={2} />
+        <ContactShadows position={[0, -0.95, 0]} opacity={0.35} scale={6} blur={2.4} far={2} />
 
         <CameraRig activePart={activePart} controlsRef={controlsRef} />
 
@@ -71,7 +74,7 @@ function App() {
           ref={controlsRef}
           makeDefault
           enablePan={false}
-          minDistance={1.6}
+          minDistance={1.4}
           maxDistance={6}
           minPolarAngle={Math.PI / 4}
           maxPolarAngle={Math.PI / 1.7}
@@ -90,7 +93,7 @@ function App() {
       {/* annotation overlay */}
       <div className="pointer-events-none absolute inset-0 z-10">
         <AnnotationLines activePart={activePart} />
-        {robotParts.map((p) => (
+        {heartParts.map((p) => (
           <PartLabel key={p.id} part={p} active={activePart === p.id} onClick={() => toggle(p.id)} />
         ))}
       </div>
@@ -124,6 +127,12 @@ function App() {
         >
           ⟳
         </button>
+        <SoundControls
+          heartbeatOn={heartbeatOn}
+          musicOn={musicOn}
+          onToggleHeartbeat={toggleHeartbeat}
+          onToggleMusic={toggleMusic}
+        />
       </div>
 
       <InfoPanel part={selected} onClose={() => setActivePart(null)} />
