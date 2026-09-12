@@ -15,7 +15,7 @@ export function SoundControls({ heartbeatOn, musicOn, onToggleHeartbeat, onToggl
         className={`pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border text-lg shadow-sm backdrop-blur-xl transition hover:scale-105 ${
           heartbeatOn
             ? 'border-transparent bg-[var(--accent)] text-white'
-            : 'border-[var(--panel-border)] bg-[var(--panel)] text-[var(--ink)] hover:bg-white/90'
+            : 'border-[var(--panel-border)] bg-[var(--panel)] text-[var(--ink)] hover:bg-[rgba(20,34,58,0.85)]'
         }`}
       >
         {heartbeatOn ? '🔊' : '🔈'}
@@ -27,7 +27,7 @@ export function SoundControls({ heartbeatOn, musicOn, onToggleHeartbeat, onToggl
         className={`pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border text-lg shadow-sm backdrop-blur-xl transition hover:scale-105 ${
           musicOn
             ? 'border-transparent bg-[var(--accent)] text-white'
-            : 'border-[var(--panel-border)] bg-[var(--panel)] text-[var(--ink)] hover:bg-white/90'
+            : 'border-[var(--panel-border)] bg-[var(--panel)] text-[var(--ink)] hover:bg-[rgba(20,34,58,0.85)]'
         }`}
       >
         🎵

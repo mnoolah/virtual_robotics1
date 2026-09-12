@@ -23,7 +23,7 @@ export function InfoPanel({ part, onClose }: Props) {
         </div>
         <button
           onClick={onClose}
-          className="rounded-full p-1 text-[var(--ink-soft)] transition hover:bg-black/5"
+          className="rounded-full p-1 text-[var(--ink-soft)] transition hover:bg-white/10"
           aria-label="إغلاق"
         >
           ✕

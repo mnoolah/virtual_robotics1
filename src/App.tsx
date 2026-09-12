@@ -52,17 +52,19 @@ function App() {
 
       {/* canvas */}
       <Canvas shadows camera={{ position: [2.5, 1.7, 3.7], fov: 38 }} className="!absolute inset-0">
-        <color attach="background" args={['#f3e2da']} />
-        <fog attach="fog" args={['#f3e2da', 6, 12]} />
-        <ambientLight intensity={0.6} />
+        <color attach="background" args={['#050a16']} />
+        <fog attach="fog" args={['#050a16', 5, 11]} />
+        <ambientLight intensity={0.35} />
         <directionalLight
           castShadow
           position={[3, 5, 2]}
-          intensity={1.4}
+          intensity={1.3}
+          color="#fff1e8"
           shadow-mapSize={[1024, 1024]}
         />
-        <directionalLight position={[-3, 2, -2]} intensity={0.5} color="#8b2f5e" />
-        <pointLight position={[0, 1.6, 1.4]} intensity={0.6} color="#3a8fb7" />
+        <directionalLight position={[-3, 2, -2.5]} intensity={0.6} color="#4fd8ff" />
+        <pointLight position={[0, 1.5, 1.6]} intensity={0.8} color="#4fd8ff" />
+        <pointLight position={[0, -1, 0]} intensity={0.5} color="#2ec5f0" />
 
         <HeartModel activePart={activePart} onSelect={toggle} />
 
@@ -108,7 +110,7 @@ function App() {
           }}
           title="إعادة الضبط"
           aria-label="إعادة الضبط"
-          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-[var(--panel-border)] bg-[var(--panel)] text-lg text-[var(--ink)] shadow-sm backdrop-blur-xl transition hover:scale-105 hover:bg-white/90"
+          className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border border-[var(--panel-border)] bg-[var(--panel)] text-lg text-[var(--ink)] shadow-sm backdrop-blur-xl transition hover:scale-105 hover:bg-[rgba(20,34,58,0.85)]"
         >
           ⟲
         </button>
@@ -122,7 +124,7 @@ function App() {
           className={`pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border text-lg shadow-sm backdrop-blur-xl transition hover:scale-105 ${
             autoRotate
               ? 'border-transparent bg-[var(--accent)] text-white'
-              : 'border-[var(--panel-border)] bg-[var(--panel)] text-[var(--ink)] hover:bg-white/90'
+              : 'border-[var(--panel-border)] bg-[var(--panel)] text-[var(--ink)] hover:bg-[rgba(20,34,58,0.85)]'
           }`}
         >
           ⟳
