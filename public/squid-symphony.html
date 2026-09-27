@@ -1,0 +1,1618 @@
+<title>سمفونية الحبّار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --abyss: #03121c;
+    --panel: rgba(5, 24, 35, 0.84);
+    --panel-2: rgba(12, 42, 58, 0.72);
+    --line: rgba(150, 196, 206, 0.2);
+    --staff: rgba(205, 228, 233, 0.3);
+    --ink: #eaf3f0;
+    --muted: #95b5bc;
+    --coral: #f2896b;
+    --coral-deep: #2b0f07;
+    --gold: #e8c46a;
+    --good: #72d8ab;
+    --bad: #ff8a80;
+    --display: "Amiri", "Noto Naskh Arabic", "Times New Roman", serif;
+    --body: "IBM Plex Sans Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--abyss);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    overflow: hidden;
+  }
+  #app { position: fixed; inset: 0; overflow: hidden; }
+  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+  #scene.hovering { cursor: pointer; }
+  #scene:active { cursor: grabbing; }
+
+  button { font: inherit; color: inherit; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* header */
+  .top {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    inset-inline: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    pointer-events: none;
+  }
+  .top > * { pointer-events: auto; }
+  .brand h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(30px, 4.2vw, 46px);
+    line-height: 1.05;
+    margin: 0;
+    text-wrap: balance;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+  }
+  .brand h1 span { color: var(--coral); }
+  .brand p { margin: 6px 0 0; color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 44ch; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .seg {
+    display: flex;
+    padding: 3px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(3, 18, 28, 0.72);
+    backdrop-filter: blur(10px);
+  }
+  .seg button {
+    border: 0;
+    background: transparent;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--abyss); font-weight: 600; }
+  .btn {
+    border: 1px solid var(--line);
+    background: rgba(3, 18, 28, 0.72);
+    backdrop-filter: blur(10px);
+    border-radius: 999px;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .btn:hover { border-color: rgba(233, 243, 240, 0.45); }
+  .btn.primary { background: var(--coral); border-color: transparent; color: var(--coral-deep); font-weight: 600; }
+  .btn.primary:hover { background: #f59c82; }
+  .btn[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+
+  /* info panel */
+  .panel {
+    position: absolute;
+    inset-inline-start: 16px;
+    top: 132px;
+    bottom: 156px;
+    width: min(360px, calc(100% - 32px));
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 18px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .eyebrow { font-size: 12px; letter-spacing: 0.04em; color: var(--gold); display: flex; justify-content: space-between; gap: 8px; }
+  .panel h2 { font-family: var(--display); font-size: 32px; line-height: 1.15; margin: 0; text-wrap: balance; }
+  .latin { font-family: var(--mono); font-size: 12.5px; color: var(--muted); direction: ltr; text-align: end; margin-top: -8px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13.5px; color: var(--muted); }
+  .kind { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(233, 243, 240, 0.1); color: var(--ink); }
+  .kind.int { background: rgba(242, 137, 107, 0.18); color: #ffc1ad; }
+  .meta b { color: var(--ink); font-weight: 600; }
+  .desc { margin: 0; line-height: 1.85; }
+  .why { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.75; }
+  .fact { padding: 12px 14px; border-radius: 12px; background: var(--panel-2); }
+  .fact h3 { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--gold); }
+  .fact p { margin: 0; line-height: 1.8; font-size: 14px; }
+  .howto { margin: 0; padding-inline-start: 18px; line-height: 1.9; color: var(--muted); font-size: 14px; }
+  .howto b { color: var(--ink); font-weight: 500; }
+  .groups { display: grid; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .groups h3 { margin: 0; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    border: 1px solid var(--line);
+    background: transparent;
+    border-radius: 999px;
+    padding: 4px 11px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .chip:hover { border-color: rgba(233, 243, 240, 0.45); }
+  .chip[aria-pressed="true"] { background: var(--coral); color: var(--coral-deep); border-color: transparent; font-weight: 600; }
+  .reset { align-self: flex-start; }
+
+  /* score */
+  .score {
+    position: absolute;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+    inset-inline: 16px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    backdrop-filter: blur(14px);
+  }
+  .score-label { display: grid; gap: 2px; flex: none; }
+  .score-label b { font-family: var(--display); font-size: 22px; line-height: 1; }
+  .score-label span { font-size: 11.5px; color: var(--muted); }
+  .staff-wrap { flex: 1; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+  .staff { display: flex; width: max-content; }
+  .bar { position: relative; display: flex; padding: 0 8px; border-inline-start: 1px solid var(--staff); }
+  .bar:last-child { border-inline-end: 3px double var(--staff); }
+  .bar::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 24px;
+    height: 41px;
+    background: repeating-linear-gradient(to bottom, var(--staff) 0 1px, transparent 1px 10px);
+    pointer-events: none;
+  }
+  .bar-title { position: absolute; top: 2px; inset-inline-start: 8px; font-size: 11px; color: var(--gold); white-space: nowrap; }
+  .note {
+    position: relative;
+    width: 62px;
+    height: 98px;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 8px;
+  }
+  .note:hover { background: rgba(233, 243, 240, 0.06); }
+  .note .head {
+    position: absolute;
+    left: 50%;
+    width: 15px;
+    height: 11px;
+    margin-left: -7px;
+    border-radius: 50%;
+    background: var(--ink);
+    transform: rotate(-22deg);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .note .head::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 5px;
+    width: 1.5px;
+    height: 28px;
+    background: inherit;
+    transform: rotate(22deg);
+    transform-origin: bottom;
+  }
+  .note .lbl {
+    position: absolute;
+    bottom: 3px;
+    inset-inline: 0;
+    font-size: 11.5px;
+    color: var(--muted);
+    white-space: nowrap;
+    text-align: center;
+  }
+  .note[aria-pressed="true"] .head { background: var(--coral); box-shadow: 0 0 14px rgba(242, 137, 107, 0.8); transform: rotate(-22deg) scale(1.25); }
+  .note[aria-pressed="true"] .lbl { color: var(--ink); font-weight: 600; }
+  .note.done .head { background: var(--gold); }
+
+  /* in-scene labels */
+  .pin { position: absolute; left: 0; top: 0; pointer-events: none; will-change: transform; }
+  .pin-dot {
+    position: absolute;
+    width: 12px; height: 12px;
+    margin: -6px 0 0 -6px;
+    border-radius: 50%;
+    border: 2px solid var(--coral);
+    box-shadow: 0 0 0 4px rgba(242, 137, 107, 0.25);
+    animation: ping 1.6s ease-out infinite;
+  }
+  .pin-line { position: absolute; left: 0; bottom: 8px; width: 1px; height: 46px; background: linear-gradient(to top, var(--coral), transparent); }
+  .pin-label {
+    position: absolute;
+    left: 0;
+    bottom: 54px;
+    transform: translateX(-50%);
+    padding: 3px 12px 5px;
+    border-radius: 8px;
+    background: rgba(3, 18, 28, 0.82);
+    font-family: var(--display);
+    font-size: 19px;
+    white-space: nowrap;
+    direction: rtl;
+  }
+  @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(242, 137, 107, 0.6); } 100% { box-shadow: 0 0 0 16px rgba(242, 137, 107, 0); } }
+  .tip {
+    position: absolute; left: 0; top: 0;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: rgba(233, 243, 240, 0.94);
+    color: var(--abyss);
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+    white-space: nowrap;
+    direction: rtl;
+  }
+
+  /* quiz */
+  .quizbar {
+    position: absolute;
+    top: 132px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 10px 8px 16px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--abyss);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
+  }
+  .quizbar .q { font-size: 15px; }
+  .quizbar .q b { font-family: var(--display); font-size: 20px; }
+  .quizbar .sc { font-family: var(--mono); font-size: 13px; padding: 2px 10px; border-radius: 999px; background: rgba(3, 18, 28, 0.08); }
+  .quizbar .fb { font-size: 13.5px; font-weight: 600; }
+  .quizbar .fb.ok { color: #0f7a4d; }
+  .quizbar .fb.no { color: #b3261e; }
+  .quizbar button { border: 0; background: var(--abyss); color: var(--ink); border-radius: 999px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
+
+  .loading {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    background: var(--abyss);
+    color: var(--muted);
+    font-size: 15px;
+    text-align: center;
+    padding-inline: 16px;
+  }
+
+  @media (max-width: 760px) {
+    .brand p { display: none; }
+    .brand h1 { font-size: 28px; }
+    .top { gap: 8px; }
+    .controls { gap: 6px; }
+    .seg button { padding: 6px 11px; font-size: 13px; }
+    .btn { padding: 7px 12px; font-size: 13px; }
+    .panel {
+      top: auto;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 126px);
+      inset-inline: 12px;
+      width: auto;
+      max-height: 32%;
+      padding: 14px;
+      gap: 10px;
+    }
+    .panel h2 { font-size: 26px; }
+    .score { inset-inline: 12px; padding: 6px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
+    .score-label { display: none; }
+    .quizbar { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 126px); max-width: calc(100% - 24px); flex-wrap: wrap; justify-content: center; border-radius: 16px; white-space: normal; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pin-dot { animation: none; }
+  }
+</style>
+
+<div id="app" dir="rtl" lang="ar">
+  <canvas id="scene" aria-label="مجسم ثلاثي الأبعاد للحبار يمكن تدويره والضغط على أجزائه"></canvas>
+
+  <div class="pin" id="pin" hidden><span class="pin-line"></span><span class="pin-dot"></span><span class="pin-label" id="pin-label"></span></div>
+  <div class="tip" id="tip" hidden></div>
+
+  <header class="top">
+    <div class="brand">
+      <h1>سمفونية <span>الحبّار</span></h1>
+      <p>تسعة عشر جزءًا تعزف معًا لتبقي الحبّار حيًّا. اضغط على أي جزء لتعرف دوره وتسمع آلته.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="طريقة العرض">
+        <button type="button" data-view="external" aria-pressed="true">خارجي</button>
+        <button type="button" data-view="glass" aria-pressed="false">شفاف</button>
+        <button type="button" data-view="dissect" aria-pressed="false">تشريح</button>
+      </div>
+      <button type="button" class="btn primary" id="play">▶ عزف السمفونية</button>
+      <button type="button" class="btn" id="quiz" aria-pressed="false">اختبرني</button>
+      <button type="button" class="btn" id="sound" aria-pressed="false">الصوت مغلق</button>
+    </div>
+  </header>
+
+  <aside class="panel" id="panel" aria-live="polite">
+    <div class="eyebrow"><span id="p-move">قبل العزف</span><span id="p-count"></span></div>
+    <h2 id="p-name">أوركسترا في جسد واحد</h2>
+    <div class="latin" id="p-latin">Loligo · Decapodiformes</div>
+    <div class="meta" id="p-meta"><span class="kind">٨ أجزاء خارجية</span><span class="kind int">١١ جزءًا داخليًا</span></div>
+    <p class="desc" id="p-desc">الحبّار رخوي سريع بلا صدفة خارجية. لكل جزء فيه دور يشبه دور آلة في فرقة موسيقية: قلوب تضبط الإيقاع، وخياشيم تتنفس كالأوتار، ودماغ يقود الجميع.</p>
+    <p class="why" id="p-why" hidden></p>
+    <div class="fact" id="p-fact-box">
+      <h3>كيف تستكشف</h3>
+      <ul class="howto" id="howto">
+        <li><b>اسحب</b> لتدوير المجسم، و<b>مرّر أو قرّب بإصبعين</b> للتكبير.</li>
+        <li>اختر <b>تشريح</b> لكشف الأعضاء الداخلية، أو <b>شفاف</b> لرؤيتها عبر الجلد.</li>
+        <li>اضغط على أي جزء أو نوتة في المدوّنة بالأسفل.</li>
+        <li>شغّل <b>الصوت</b> ثم اضغط <b>عزف السمفونية</b> لجولة من خمس حركات.</li>
+      </ul>
+      <p id="p-fact" hidden></p>
+    </div>
+    <button type="button" class="btn reset" id="reset" hidden>عرض الحبّار كاملًا</button>
+    <div class="groups">
+      <h3>الأجزاء الخارجية</h3>
+      <div class="chips" id="list-ext"></div>
+      <h3>الأجزاء الداخلية</h3>
+      <div class="chips" id="list-int"></div>
+    </div>
+  </aside>
+
+  <div class="quizbar" id="quizbar" hidden>
+    <span class="q">أين <b id="q-target"></b>؟</span>
+    <span class="fb" id="q-fb"></span>
+    <span class="sc" id="q-score"></span>
+    <button type="button" id="q-end">إنهاء</button>
+  </div>
+
+  <footer class="score">
+    <div class="score-label"><b>المدوّنة</b><span>كل نوتة جزء</span></div>
+    <div class="staff-wrap"><div class="staff" id="staff"></div></div>
+  </footer>
+
+  <div class="loading" id="loading">جارٍ تجهيز الأوركسترا تحت الماء…</div>
+</div>
+
+<script>
+  setTimeout(function () {
+    var l = document.getElementById('loading');
+    if (l && !l.hidden) l.textContent = 'تعذّر تحميل مكتبة الرسم ثلاثي الأبعاد. تحقق من الاتصال ثم أعد تحميل الصفحة.';
+  }, 15000);
+</script>
+<script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+  } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = (s) => document.querySelector(s);
+const arNum = (n) => Number(n).toLocaleString('ar-EG');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ------------------------------------------------------------------ */
+/* Content                                                             */
+/* ------------------------------------------------------------------ */
+const PARTS = [
+  // external
+  { id: 'mantle', kind: 'ext', name: 'الرداء العضلي', short: 'الرداء', latin: 'Mantle', timbre: 'horn', instr: 'الهورن', deg: 2,
+    desc: 'الجدار العضلي الذي يغلّف الجسم ويحمي الأعضاء. حين ينقبض يدفع الماء بقوة عبر القمع، فيندفع الحبّار إلى الخلف بالدفع النفّاث.',
+    why: 'نَفَس طويل عميق يحمل الفرقة كلها، كما يحمل الرداء كل الأعضاء.',
+    fact: 'تندفع بعض أنواع الحبّار من الماء بقوة الرداء وتنزلق في الهواء عدة أمتار هربًا من مفترسيها.',
+    anchor: [2.1, 0.35, 0.82], cam: { dir: [0.15, 0.35, 1], dist: 7.5 } },
+  { id: 'fins', kind: 'ext', name: 'الزعنفتان', short: 'الزعانف', latin: 'Fins', timbre: 'harp', instr: 'الهارب', deg: 7,
+    desc: 'زعنفتان في مؤخرة الرداء تتموّجان للسباحة الهادئة والتوازن وتغيير الاتجاه، بينما يتولى القمع الاندفاع السريع.',
+    why: 'نقرات رقيقة متموّجة، تمامًا كحركة الزعنفتين في الماء.',
+    fact: 'في السباحة البطيئة تعمل الزعنفتان وحدهما تقريبًا، فيوفّر الحبّار الطاقة التي يستهلكها الدفع النفّاث.',
+    anchor: [5.15, 0.2, 1.05], cam: { dir: [0.35, 0.9, 0.8], dist: 4.6 } },
+  { id: 'siphon', kind: 'ext', name: 'القمع', short: 'القمع', latin: 'Funnel (siphon)', timbre: 'trumpet', instr: 'البوق', deg: 4,
+    desc: 'أنبوب عضلي أسفل الرأس يخرج منه الماء المندفع من الرداء. يوجّهه الحبّار كفوهة ليغيّر اتجاهه، ومنه يخرج الحبر والفضلات.',
+    why: 'صوت حاد يخرج من فوهة واحدة، كما يخرج الماء من القمع.',
+    fact: 'يستطيع الحبّار أن يلوي قمعه للأمام أو للخلف، فيسبح في الاتجاهين دون أن يستدير.',
+    anchor: [-0.55, -0.62, 0.2], cam: { dir: [-0.35, -0.55, 1], dist: 3.0 } },
+  { id: 'skin', kind: 'ext', name: 'الجلد والحاملات اللونية', short: 'الجلد', latin: 'Chromatophores', timbre: 'celesta', instr: 'السيليستا', deg: 11,
+    desc: 'أكياس صغيرة من الصبغة في الجلد، تحيط بكل منها عضلات يحرّكها الدماغ مباشرة. تتمدد وتنكمش فيتغيّر لون الحبّار ونقشه.',
+    why: 'رنين لامع سريع يشبه وميض الألوان وهي تعبر الجلد.',
+    fact: 'لأن الأعصاب تحرّك الحاملات اللونية مباشرة، يغيّر الحبّار لونه في أقل من ثانية.',
+    anchor: [-0.45, 0.58, 0.3], cam: { dir: [0.1, 0.6, 1], dist: 4.0 } },
+  { id: 'eyes', kind: 'ext', name: 'العينان', short: 'العينان', latin: 'Camera-type eyes', timbre: 'flute', instr: 'الفلوت', deg: 9,
+    desc: 'عينان كبيرتان تشبهان الكاميرا، لكل منهما عدسة وشبكية. تمنحان الحبّار رؤية حادة لرصد الفريسة والمفترس في الأعماق المعتمة.',
+    why: 'لحن صافٍ عالٍ، كنظرة واضحة في الماء المعتم.',
+    fact: 'أعصاب شبكية الحبّار تقع خلف الخلايا الضوئية لا أمامها، لذلك لا توجد في عينه بقعة عمياء كالتي في عين الإنسان.',
+    anchor: [-0.55, 0.12, 0.9], cam: { dir: [0.05, 0.15, 1], dist: 2.4 } },
+  { id: 'tentacles', kind: 'ext', name: 'اللامستان', short: 'اللامستان', latin: 'Tentacles & club', timbre: 'trombone', instr: 'الترومبون', deg: 3,
+    desc: 'ذراعان أطول من البقية تنتهيان بـ«هراوة» مليئة بالممصات. تنطلقان فجأة لاقتناص الفريسة ثم تنكمشان.',
+    why: 'آلة تنزلق وتمتد كما تنزلق اللامستان نحو الفريسة.',
+    fact: 'تنطلق اللامستان نحو الفريسة في أجزاء من الثانية، وهي من أسرع حركات الصيد في البحر.',
+    anchor: [-4.3, -0.5, 0.3], cam: { dir: [-0.2, 0.3, 1], dist: 6.2 } },
+  { id: 'arms', kind: 'ext', name: 'الأذرع الثمانية', short: 'الأذرع', latin: 'Arms (8)', timbre: 'violin', instr: 'الكمان', deg: 5,
+    desc: 'ثماني أذرع قصيرة قوية تصطف عليها الممصات. تمسك الفريسة بعد التقاطها وتقرّبها من المنقار.',
+    why: 'ثمانية أوتار تعزف معًا، كصف الكمانات في مقدمة الفرقة.',
+    fact: 'في كثير من أنواع الحبّار تحيط بكل ممص حلقة صلبة مسنّنة تمنع الفريسة الزلقة من الإفلات.',
+    anchor: [-2.5, -0.1, 0.55], cam: { dir: [-0.15, 0.3, 1], dist: 5.0 } },
+  { id: 'beak', kind: 'ext', name: 'المنقار', short: 'المنقار', latin: 'Beak', timbre: 'cymbal', instr: 'الصنج', deg: 8,
+    desc: 'منقار صلب من الكيتين يشبه منقار الببغاء، في منتصف قاعدة الأذرع. يقطّع الفريسة إلى قطع صغيرة، وخلفه لسان مبشور يسمى الراديولا.',
+    why: 'ضربة معدنية قصيرة وحادة كقضمة المنقار.',
+    fact: 'المنقار من أصلب أجزاء الحبّار، ويبقى في معدة الحيتان بعد هضم باقي الجسم، ومنه عرف العلماء الكثير عن الحبّار العملاق.',
+    anchor: [-1.62, 0, 0], cam: { dir: [-1, 0.25, 0.55], dist: 2.4 } },
+  // internal
+  { id: 'branchial', kind: 'int', name: 'القلبان الخيشوميان', short: 'قلبا الخياشيم', latin: 'Branchial hearts', timbre: 'drum', instr: 'طبول الإيقاع', deg: 1,
+    desc: 'قلبان صغيران عند قاعدة الخياشيم، يضخّان الدم العائد من الجسم عبر الخياشيم ليتزوّد بالأكسجين.',
+    why: 'ضربتان سريعتان متتاليتان، بإيقاع القلبين الصغيرين.',
+    fact: 'دم الحبّار أزرق لأنه يحمل الأكسجين بصبغة الهيموسيانين التي تحتوي النحاس، لا بالهيموغلوبين الذي يحتوي الحديد.',
+    anchor: [3.3, -0.22, 0.52], cam: { dir: [0.1, 0.3, 1], dist: 2.6 } },
+  { id: 'heart', kind: 'int', name: 'القلب الجهازي', short: 'القلب', latin: 'Systemic heart', timbre: 'timpani', instr: 'التيمباني', deg: 0,
+    desc: 'القلب الرئيسي. يستقبل الدم الغني بالأكسجين من الخياشيم ويضخّه إلى الرأس والأذرع وباقي الجسم.',
+    why: 'نبض عميق ثابت يضبط إيقاع الفرقة كلها.',
+    fact: 'للحبّار ثلاثة قلوب: قلب جهازي واحد وقلبان خيشوميان، تعمل معًا كفرقة إيقاع واحدة.',
+    anchor: [3.05, -0.18, 0.05], cam: { dir: [0.1, 0.3, 1], dist: 2.4 } },
+  { id: 'gills', kind: 'int', name: 'الخياشيم', short: 'الخياشيم', latin: 'Gills (ctenidia)', timbre: 'cello', instr: 'التشيلو', deg: 4,
+    desc: 'عضوان ريشيّان داخل تجويف الرداء، يتكوّنان من صفائح رقيقة كثيرة. يمر عليها الماء فيأخذ الدم منه الأكسجين.',
+    why: 'أوتار دافئة تتنفس ببطء، شهيقًا وزفيرًا.',
+    fact: 'كل انقباض للرداء أثناء السباحة يجدّد الماء فوق الخياشيم، فالحركة والتنفس عند الحبّار عمل واحد.',
+    anchor: [2.3, -0.2, 0.62], cam: { dir: [0.1, 0.35, 1], dist: 3.2 } },
+  { id: 'stomach', kind: 'int', name: 'المعدة والمريء', short: 'المعدة', latin: 'Stomach & oesophagus', timbre: 'clarinet', instr: 'الكلارينيت', deg: 6,
+    desc: 'كيس عضلي يستقبل الطعام من المريء، فيخلطه بالإنزيمات ويطحنه قبل أن ينتقل إلى الأعور.',
+    why: 'نغمة خشبية دائرية، كحركة المعدة وهي تخلط الطعام.',
+    fact: 'يمر الطعام من المنقار عبر مريء رفيع يخترق الدماغ، ثم يقطع الرداء حتى يصل إلى المعدة.',
+    anchor: [2.75, 0.02, 0.2], cam: { dir: [0.1, 0.35, 1], dist: 2.6 } },
+  { id: 'caecum', kind: 'int', name: 'الأعور والأمعاء', short: 'الأعور', latin: 'Caecum & intestine', timbre: 'oboe', instr: 'الأوبوا', deg: 7,
+    desc: 'كيس هضمي يلي المعدة، تمتص جدرانه الغذاء المهضوم، ثم تمر البقايا في الأمعاء نحو فتحة الإخراج قرب القمع.',
+    why: 'نغمة أنفية رفيعة تتسلل كما يتسلل الغذاء في الأمعاء.',
+    fact: 'تحمل جدران الأعور ثنيات رقيقة تزيد مساحة الامتصاص كثيرًا.',
+    anchor: [3.5, 0.0, -0.05], cam: { dir: [0.15, 0.45, 1], dist: 2.8 } },
+  { id: 'digestive', kind: 'int', name: 'الغدة الهضمية', short: 'الهضمية', latin: 'Digestive gland', timbre: 'bassoon', instr: 'الباسون', deg: 2,
+    desc: 'أكبر أعضاء الهضم، وتُشبَّه بالكبد. تفرز الإنزيمات وتمتص الغذاء وتخزن الطاقة.',
+    why: 'صوت خشبي منخفض ثقيل، بحجم أكبر عضو في الجوف.',
+    fact: 'الحبّار صياد نشط سريع النمو، فيأكل كل يوم كمية كبيرة نسبةً إلى وزنه ويهضمها بسرعة.',
+    anchor: [1.3, 0.25, 0.3], cam: { dir: [0.1, 0.35, 1], dist: 3.4 } },
+  { id: 'ink', kind: 'int', name: 'كيس الحبر', short: 'الحبر', latin: 'Ink sac', timbre: 'contrabass', instr: 'الكونترباص', deg: 0,
+    desc: 'كيس داكن ملتصق بالمستقيم يخزّن حبرًا من صبغة الميلانين. عند الخطر يُطلَق عبر القمع سحابة تربك المفترس.',
+    why: 'أعمق صوت في الفرقة، ظلّ داكن ينتشر كسحابة الحبر.',
+    fact: 'قد يطلق الحبّار كتلة حبر مخاطية بحجم جسمه تقريبًا، فينشغل بها المفترس بينما يهرب الحبّار.',
+    anchor: [1.1, -0.28, 0.2], cam: { dir: [0.1, -0.1, 1], dist: 2.6 } },
+  { id: 'brain', kind: 'int', name: 'الدماغ', short: 'الدماغ', latin: 'Brain & optic lobes', timbre: 'chord', instr: 'قائد الأوركسترا', deg: 7,
+    desc: 'دماغ كبير على شكل حلقة يلتف حول المريء بين العينين، وله فصّان بصريان كبيران. ينسّق الحركة والرؤية وتغيير الألوان والتعلّم.',
+    why: 'لا يعزف آلة واحدة، بل يطلق الفرقة كلها في وتر واحد.',
+    fact: 'لأن المريء يمر من وسط الدماغ، يقطّع الحبّار طعامه إلى لقيمات صغيرة حتى لا تضغط على دماغه.',
+    anchor: [-0.55, 0.08, 0.1], cam: { dir: [0.1, 0.4, 1], dist: 2.3 } },
+  { id: 'axon', kind: 'int', name: 'العصب العملاق', short: 'العصب', latin: 'Stellate ganglion & giant axon', timbre: 'triangle', instr: 'المثلث', deg: 12,
+    desc: 'ألياف عصبية سميكة تنطلق من العقدتين النجميتين إلى عضلات الرداء، فتنقل أمر الهروب إلى الرداء كله في لحظة واحدة.',
+    why: 'رنّة واحدة عالية تُسمع في كل أرجاء القاعة فورًا.',
+    fact: 'يبلغ قطر المحور العصبي العملاق نحو ملّيمتر، وبدراسته فهم هودجكن وهكسلي الإشارة العصبية ونالا جائزة نوبل عام 1963.',
+    anchor: [1.6, 0.42, 0.62], cam: { dir: [0.1, 0.45, 1], dist: 4.4 } },
+  { id: 'gladius', kind: 'int', name: 'القلم (الريشة)', short: 'القلم', latin: 'Gladius (pen)', timbre: 'piano', instr: 'البيانو', deg: 9,
+    desc: 'دعامة داخلية رقيقة مرنة من الكيتين تمتد على طول الظهر، وهي بقايا صدفة أسلاف الحبّار.',
+    why: 'آلة تحمل اللحن من الداخل، كما يسند القلم الرداء.',
+    fact: 'سُمّي «القلم» لأنه يشبه ريشة الكتابة الشفافة.',
+    anchor: [3.0, 0.72, 0.1], cam: { dir: [0.1, 1, 0.55], dist: 5.8 } },
+  { id: 'gonad', kind: 'int', name: 'الغدة التناسلية', short: 'التناسلية', latin: 'Gonad', timbre: 'viola', instr: 'الفيولا', deg: 5,
+    desc: 'في مؤخرة الرداء. تنتج البيوض عند الأنثى والحيوانات المنوية عند الذكر.',
+    why: 'وتر دافئ يختم اللحن ويسلّمه للجيل التالي.',
+    fact: 'تعيش معظم أنواع الحبّار نحو سنة أو سنتين، وتتكاثر مرة واحدة في آخر حياتها.',
+    anchor: [4.5, 0.05, 0.2], cam: { dir: [0.2, 0.45, 1], dist: 3.2 } },
+];
+const PART = Object.fromEntries(PARTS.map((p) => [p.id, p]));
+
+const MOVEMENTS = [
+  { n: 'الافتتاحية', title: 'الهيئة', parts: ['mantle', 'fins', 'siphon', 'skin'] },
+  { n: 'الحركة الثانية', title: 'الصيد', parts: ['eyes', 'tentacles', 'arms', 'beak'] },
+  { n: 'الحركة الثالثة', title: 'الإيقاع', parts: ['branchial', 'heart', 'gills'] },
+  { n: 'الحركة الرابعة', title: 'الهضم', parts: ['stomach', 'caecum', 'digestive', 'ink'] },
+  { n: 'الختام', title: 'التحكم والحياة', parts: ['brain', 'axon', 'gladius', 'gonad'] },
+];
+const MOVE_OF = {};
+MOVEMENTS.forEach((m, i) => m.parts.forEach((id) => (MOVE_OF[id] = i)));
+
+/* ------------------------------------------------------------------ */
+/* Sound — a tiny synth orchestra                                      */
+/* ------------------------------------------------------------------ */
+const Sound = {
+  ctx: null, out: null, on: false, noiseBuf: null,
+  init() {
+    if (this.ctx) { this.ctx.resume(); return true; }
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return false;
+    const ctx = (this.ctx = new C());
+    const comp = ctx.createDynamicsCompressor();
+    comp.connect(ctx.destination);
+    this.out = ctx.createGain();
+    this.out.gain.value = 0.6;
+    this.out.connect(comp);
+    const rev = ctx.createConvolver();
+    rev.buffer = this.impulse(3.4, 2.6);
+    const wet = ctx.createGain();
+    wet.gain.value = 0.32;
+    this.out.connect(rev); rev.connect(wet); wet.connect(comp);
+    const len = ctx.sampleRate;
+    this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = this.noiseBuf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return true;
+  },
+  impulse(sec, decay) {
+    const ctx = this.ctx, len = Math.floor(ctx.sampleRate * sec);
+    const b = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = b.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return b;
+  },
+  freq(deg, oct = 0) {
+    const steps = [0, 2, 4, 7, 9];
+    const s = steps[((deg % 5) + 5) % 5] + 12 * Math.floor(deg / 5) + 12 * oct;
+    return 146.83 * Math.pow(2, s / 12); // D3 pentatonic
+  },
+  tone(o) {
+    const ctx = this.ctx;
+    const t = o.t ?? ctx.currentTime + 0.02;
+    const a = o.a ?? 0.02, h = o.h ?? 0.3, r = o.r ?? 0.6, peak = o.peak ?? 0.2;
+    const end = t + a + h + r;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + a);
+    g.gain.setValueAtTime(peak, t + a + h);
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+    const f = ctx.createBiquadFilter();
+    f.type = o.ft || 'lowpass';
+    f.frequency.setValueAtTime(o.fc || 5000, t);
+    if (o.fc2) f.frequency.exponentialRampToValueAtTime(o.fc2, t + a + h * 0.5 + 0.01);
+    f.Q.value = o.q || 0.7;
+    f.connect(g); g.connect(this.out);
+    const types = o.types || ['sine'];
+    types.forEach((ty, i) => {
+      const os = ctx.createOscillator();
+      os.type = ty;
+      const fr = o.f * (o.mult ? o.mult[i] : 1);
+      if (o.drop) {
+        os.frequency.setValueAtTime(fr * o.drop, t);
+        os.frequency.exponentialRampToValueAtTime(fr, t + 0.09);
+      } else os.frequency.setValueAtTime(fr, t);
+      os.detune.value = o.dets ? o.dets[i] || 0 : 0;
+      if (o.vib) {
+        const l = ctx.createOscillator(); l.frequency.value = 5.3;
+        const lg = ctx.createGain(); lg.gain.value = o.vib;
+        l.connect(lg); lg.connect(os.detune); l.start(t); l.stop(end + 0.05);
+      }
+      const og = ctx.createGain(); og.gain.value = o.mix ? o.mix[i] : 1;
+      os.connect(og); og.connect(f);
+      os.start(t); os.stop(end + 0.05);
+    });
+  },
+  noise(t, dur, fc, type, peak) {
+    const ctx = this.ctx;
+    const s = ctx.createBufferSource(); s.buffer = this.noiseBuf;
+    const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = fc;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(peak, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(this.out);
+    s.start(t); s.stop(t + dur + 0.05);
+  },
+  play(id) {
+    if (!this.on || !this.ctx) return;
+    const p = PART[id], d = p.deg, t = this.ctx.currentTime + 0.03;
+    const F = (oct, dd = d) => this.freq(dd, oct);
+    const saw = 'sawtooth';
+    switch (p.timbre) {
+      case 'horn': this.tone({ t, f: F(0), types: [saw, saw], dets: [-6, 6], a: 0.09, h: 0.55, r: 0.9, fc: 450, fc2: 1300, peak: 0.13, vib: 6 }); break;
+      case 'harp': [0, 2, 4].forEach((k, i) => this.tone({ t: t + i * 0.09, f: F(1, d + k), types: ['triangle', 'sine'], mult: [1, 2], mix: [1, 0.3], a: 0.004, h: 0.02, r: 1.5, fc: 3200, peak: 0.2 })); break;
+      case 'trumpet': this.tone({ t, f: F(1), types: [saw], a: 0.04, h: 0.35, r: 0.5, fc: 900, fc2: 3200, peak: 0.1, vib: 8 }); break;
+      case 'celesta': [0, 1, 2, 4].forEach((k, i) => this.tone({ t: t + i * 0.07, f: F(2, d + k - 5), types: ['sine', 'sine', 'sine'], mult: [1, 2.76, 5.4], mix: [1, 0.35, 0.15], a: 0.004, h: 0.02, r: 1.8, peak: 0.13 })); break;
+      case 'flute': this.tone({ t, f: F(1), types: ['sine', 'triangle'], mult: [1, 2], mix: [1, 0.12], a: 0.14, h: 0.55, r: 0.7, peak: 0.17, vib: 12 }); this.noise(t, 0.25, 2500, 'bandpass', 0.03); break;
+      case 'trombone': this.tone({ t, f: F(-1) * 0.94, types: [saw], a: 0.05, h: 0.05, r: 0.05, fc: 500, peak: 0.08 }); this.tone({ t: t + 0.12, f: F(-1), types: [saw, saw], dets: [-5, 5], a: 0.06, h: 0.5, r: 0.6, fc: 420, fc2: 1300, peak: 0.13 }); break;
+      case 'violin': this.tone({ t, f: F(1), types: [saw, saw], dets: [-8, 8], a: 0.18, h: 0.6, r: 0.8, fc: 2600, peak: 0.08, vib: 14 }); break;
+      case 'cymbal': this.noise(t, 1.1, 6000, 'highpass', 0.14); this.tone({ t, f: F(2), types: ['square'], a: 0.002, h: 0.01, r: 0.12, fc: 3000, peak: 0.05 }); break;
+      case 'drum': [0, 0.2].forEach((dt) => this.tone({ t: t + dt, f: F(-1), types: ['sine'], drop: 2, a: 0.004, h: 0.04, r: 0.35, peak: 0.45 })); break;
+      case 'timpani': this.tone({ t, f: F(-1), types: ['sine', 'sine'], mult: [1, 1.5], mix: [1, 0.3], drop: 1.5, a: 0.004, h: 0.1, r: 1.1, peak: 0.55 }); this.noise(t, 0.15, 400, 'lowpass', 0.15); break;
+      case 'cello': this.tone({ t, f: F(0), types: [saw, saw], dets: [-5, 5], a: 0.16, h: 0.7, r: 0.9, fc: 1200, peak: 0.11, vib: 10 }); break;
+      case 'clarinet': this.tone({ t, f: F(1), types: ['square'], a: 0.06, h: 0.45, r: 0.5, fc: 1500, peak: 0.07 }); break;
+      case 'oboe': this.tone({ t, f: F(1), types: [saw], ft: 'bandpass', fc: 1400, q: 2, a: 0.05, h: 0.45, r: 0.5, peak: 0.2, vib: 8 }); break;
+      case 'bassoon': this.tone({ t, f: F(-1), types: [saw], a: 0.07, h: 0.5, r: 0.6, fc: 700, peak: 0.15 }); break;
+      case 'contrabass': this.tone({ t, f: F(-1), types: [saw, saw], dets: [-4, 4], a: 0.12, h: 0.8, r: 1.1, fc: 330, peak: 0.24 }); break;
+      case 'chord': [0, 2, 4, 5].forEach((k) => this.tone({ t, f: F(0, d + k - 2), types: [saw, 'triangle'], dets: [-6, 4], a: 0.35, h: 0.9, r: 1.5, fc: 1600, peak: 0.05, vib: 8 })); break;
+      case 'triangle': this.tone({ t, f: F(1), types: ['sine', 'sine'], mult: [1, 2.76], mix: [1, 0.5], a: 0.002, h: 0.01, r: 2.6, peak: 0.12 }); break;
+      case 'piano': [0, 3].forEach((k, i) => this.tone({ t: t + i * 0.18, f: F(0, d + k), types: ['triangle', 'sine'], mult: [1, 2], mix: [1, 0.4], a: 0.004, h: 0.05, r: 1.7, fc: 2500, peak: 0.2 })); break;
+      case 'viola': this.tone({ t, f: F(0), types: [saw, saw], dets: [-7, 7], a: 0.18, h: 0.6, r: 0.9, fc: 2000, peak: 0.09, vib: 12 }); break;
+    }
+  },
+  heartbeat() {
+    if (!this.on || !this.ctx) return;
+    const t = this.ctx.currentTime + 0.02;
+    this.tone({ t, f: 52, types: ['sine'], drop: 1.8, a: 0.004, h: 0.03, r: 0.25, peak: 0.28 });
+    this.tone({ t: t + 0.19, f: 48, types: ['sine'], drop: 1.6, a: 0.004, h: 0.03, r: 0.22, peak: 0.18 });
+  },
+  finale() {
+    if (!this.on || !this.ctx) return;
+    const t = this.ctx.currentTime + 0.05;
+    [0, 4, 7, 9, 12].forEach((k, i) => this.tone({ t: t + i * 0.06, f: this.freq(k, 0), types: ['sawtooth', 'triangle'], dets: [-6, 6], a: 0.3, h: 1.2, r: 2.2, fc: 1800, peak: 0.06, vib: 8 }));
+    this.tone({ t, f: this.freq(0, -1), types: ['sine'], drop: 1.5, a: 0.004, h: 0.1, r: 1.6, peak: 0.5 });
+  },
+};
+
+/* ------------------------------------------------------------------ */
+/* Scene                                                               */
+/* ------------------------------------------------------------------ */
+const canvas = $('#scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.localClippingEnabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x05202f, 0.028);
+{
+  const c = document.createElement('canvas'); c.width = 4; c.height = 512;
+  const g = c.getContext('2d');
+  const gr = g.createLinearGradient(0, 0, 0, 512);
+  gr.addColorStop(0, '#1b6a86'); gr.addColorStop(0.28, '#0b3a52'); gr.addColorStop(0.65, '#062232'); gr.addColorStop(1, '#020b12');
+  g.fillStyle = gr; g.fillRect(0, 0, 4, 512);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  scene.background = t;
+}
+
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 200);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 1.6;
+controls.maxDistance = 30;
+controls.enablePan = true;
+
+scene.add(new THREE.HemisphereLight(0xa6e2ef, 0x0b2230, 1.25));
+const key = new THREE.DirectionalLight(0xfff0e0, 2.4); key.position.set(3, 9, 7); scene.add(key);
+const rim = new THREE.DirectionalLight(0x62d4e6, 1.6); rim.position.set(-7, 3, -6); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffc7ae, 0.6); fill.position.set(2, -5, 6); scene.add(fill);
+const inner = new THREE.PointLight(0xffe1c4, 0, 9, 1.6); inner.position.set(2.2, 0.6, 2.4); scene.add(inner);
+
+// light shafts
+const shafts = [];
+{
+  const c = document.createElement('canvas'); c.width = 64; c.height = 256;
+  const g = c.getContext('2d');
+  const h = g.createLinearGradient(0, 0, 64, 0);
+  h.addColorStop(0, 'rgba(255,255,255,0)'); h.addColorStop(0.5, 'rgba(255,255,255,1)'); h.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = h; g.fillRect(0, 0, 64, 256);
+  g.globalCompositeOperation = 'destination-in';
+  const v = g.createLinearGradient(0, 0, 0, 256);
+  v.addColorStop(0, 'rgba(0,0,0,1)'); v.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = v; g.fillRect(0, 0, 64, 256);
+  const tex = new THREE.CanvasTexture(c);
+  for (let i = 0; i < 6; i++) {
+    const m = new THREE.MeshBasicMaterial({ map: tex, color: 0x9fe4f2, transparent: true, opacity: 0.07 + Math.random() * 0.06, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, side: THREE.DoubleSide });
+    const s = new THREE.Mesh(new THREE.PlaneGeometry(1.4 + Math.random() * 2.2, 26), m);
+    s.position.set(-9 + i * 3.6 + Math.random(), 5, -9 - Math.random() * 5);
+    s.rotation.z = -0.28 + Math.random() * 0.1;
+    s.userData.phase = Math.random() * 6;
+    scene.add(s); shafts.push(s);
+  }
+}
+
+// round sprite for particles
+const dotTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.45, 'rgba(255,255,255,0.55)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})();
+
+// marine snow
+const snow = (() => {
+  const n = 700, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { pos[i * 3] = (Math.random() - 0.5) * 40; pos[i * 3 + 1] = (Math.random() - 0.5) * 22; pos[i * 3 + 2] = (Math.random() - 0.5) * 30 - 3; }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.PointsMaterial({ map: dotTex, size: 0.09, color: 0xbfe6ee, transparent: true, opacity: 0.55, depthWrite: false });
+  const p = new THREE.Points(g, m); scene.add(p); return p;
+})();
+
+/* ------------------------------------------------------------------ */
+/* Squid                                                               */
+/* ------------------------------------------------------------------ */
+const squid = new THREE.Group();
+squid.rotation.z = 0.2;
+scene.add(squid);
+
+const clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 50);
+let clipVal = 1.4, clipTarget = 1.4;
+const CLIP_OFF = 1.35;
+
+// living skin texture: chromatophores drawn on a canvas every few frames
+const SKIN_W = 768, SKIN_H = 384;
+const skinCanvas = document.createElement('canvas'); skinCanvas.width = SKIN_W; skinCanvas.height = SKIN_H;
+const skinCtx = skinCanvas.getContext('2d');
+const skinTex = new THREE.CanvasTexture(skinCanvas);
+skinTex.colorSpace = THREE.SRGBColorSpace;
+skinTex.wrapS = skinTex.wrapT = THREE.RepeatWrapping;
+skinTex.anisotropy = 4;
+const dots = [];
+{
+  const cols = ['#8e2a1d', '#a93b26', '#6d1c22', '#c0662f', '#9a3322'];
+  while (dots.length < 900) {
+    const u = Math.random(), v = Math.random();
+    const dorsal = 0.5 + 0.5 * Math.cos(2 * Math.PI * (u - 0.75));
+    if (Math.random() > 0.25 + 0.75 * dorsal) continue;
+    dots.push({ x: u * SKIN_W, y: v * SKIN_H, r: 1.6 + Math.random() * (2 + 4.5 * dorsal), ph: Math.random() * 6.28, sp: 0.6 + Math.random() * 1.2, c: cols[(Math.random() * cols.length) | 0] });
+  }
+}
+function drawSkin(t, energy) {
+  const g = skinCtx;
+  const base = g.createLinearGradient(0, 0, SKIN_W, 0);
+  base.addColorStop(0, '#edbfa9'); base.addColorStop(0.25, '#f6d9cb'); base.addColorStop(0.5, '#edbfa9');
+  base.addColorStop(0.75, '#d88a6f'); base.addColorStop(1, '#edbfa9');
+  g.globalAlpha = 1; g.fillStyle = base; g.fillRect(0, 0, SKIN_W, SKIN_H);
+  for (const d of dots) {
+    const wave = energy > 0 ? Math.sin(t * 3 - d.y * 0.03 + d.ph * 0.2) : 0;
+    const s = 1 + 0.22 * Math.sin(t * d.sp + d.ph) + energy * (0.9 * wave + 0.4);
+    const r = Math.max(0.4, d.r * s);
+    g.globalAlpha = 0.55 + 0.35 * Math.min(1, s * 0.6);
+    g.fillStyle = d.c;
+    g.beginPath(); g.arc(d.x, d.y, r, 0, 6.2832); g.fill();
+    if (d.x < 10) { g.beginPath(); g.arc(d.x + SKIN_W, d.y, r, 0, 6.2832); g.fill(); }
+    if (d.x > SKIN_W - 10) { g.beginPath(); g.arc(d.x - SKIN_W, d.y, r, 0, 6.2832); g.fill(); }
+  }
+  g.globalAlpha = 1;
+  skinTex.needsUpdate = true;
+}
+drawSkin(0, 0);
+
+const partMeshes = {}; // id -> meshes
+const partMats = {};   // id -> Set(materials)
+const pickables = [];
+const skinMats = [];
+
+function reg(id, mesh, { pick = true } = {}) {
+  (partMeshes[id] ||= []).push(mesh);
+  const set = (partMats[id] ||= new Set());
+  const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  mats.forEach((m) => {
+    if (!m.userData.baseEmissive) { m.userData.baseEmissive = m.emissive ? m.emissive.clone() : null; m.userData.baseEI = m.emissiveIntensity ?? 1; }
+    set.add(m);
+  });
+  mesh.userData.part = id;
+  if (pick) pickables.push(mesh);
+  return mesh;
+}
+
+function skinMaterial(extra = {}) {
+  const m = new THREE.MeshPhysicalMaterial({
+    map: skinTex, color: 0xffffff, roughness: 0.38, clearcoat: 0.9, clearcoatRoughness: 0.22,
+    sheen: 0.6, sheenColor: new THREE.Color(0xffd0c0), transparent: true, opacity: 1,
+    side: THREE.DoubleSide, clippingPlanes: [clipPlane], ...extra,
+  });
+  m.userData.clipped = true;
+  skinMats.push(m);
+  return m;
+}
+function organMaterial(color, extra = {}) {
+  return new THREE.MeshPhysicalMaterial({ color, roughness: 0.42, clearcoat: 0.7, clearcoatRoughness: 0.3, sheen: 0.4, sheenColor: new THREE.Color(0xffffff), ...extra });
+}
+// organic ellipsoid with a little noise
+function blob(rx, ry, rz, bump = 0.05, seed = 1, seg = 40) {
+  const g = new THREE.SphereGeometry(1, seg, Math.round(seg * 0.7));
+  const p = g.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.fromBufferAttribute(p, i);
+    const n = Math.sin(v.x * 5.1 + seed) * Math.sin(v.y * 4.3 + seed * 2) * Math.sin(v.z * 6.2 + seed * 3);
+    const n2 = Math.sin(v.x * 13 + seed * 5) * Math.sin(v.y * 11) * 0.35;
+    v.multiplyScalar(1 + bump * (n + n2));
+    p.setXYZ(i, v.x * rx, v.y * ry, v.z * rz);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+const L = 6.2; // mantle length
+const mantleR = (x) => { const t = THREE.MathUtils.clamp(x / L, 0, 1); return 0.98 * Math.pow(Math.max(0, 1 - Math.pow(t, 2.3)), 0.85) + 0.02; };
+
+// --- mantle
+const mantleGroup = new THREE.Group(); squid.add(mantleGroup);
+{
+  const pts = [];
+  for (let i = 0; i <= 60; i++) {
+    const t = i / 60;
+    pts.push(new THREE.Vector2(i === 60 ? 0.001 : mantleR(t * L), t * L));
+  }
+  const g = new THREE.LatheGeometry(pts, 72);
+  g.rotateZ(-Math.PI / 2);
+  const mantle = new THREE.Mesh(g, skinMaterial());
+  mantle.scale.set(1, 0.94, 1);
+  mantleGroup.add(mantle);
+  reg('mantle', mantle);
+}
+
+// --- fins
+const fins = [];
+{
+  const s = new THREE.Shape();
+  s.moveTo(3.35, 0);
+  s.quadraticCurveTo(4.6, 0.9, 5.35, 1.6);
+  s.quadraticCurveTo(5.95, 1.1, 6.3, 0.0);
+  s.lineTo(3.35, 0);
+  for (const side of [1, -1]) {
+    const g = new THREE.ShapeGeometry(s, 24);
+    g.rotateX(Math.PI / 2);
+    if (side < 0) g.scale(1, 1, -1);
+    // gentle camber
+    const p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const z = p.getZ(i); p.setY(i, -0.12 * z * z); }
+    g.computeVertexNormals();
+    const m = new THREE.Mesh(g, skinMaterial());
+    m.position.y = 0.12;
+    m.userData.side = side;
+    squid.add(m); fins.push(m);
+    reg('fins', m);
+  }
+}
+
+// --- head
+{
+  const head = new THREE.Mesh(blob(0.72, 0.6, 0.7, 0.015, 3), skinMaterial());
+  head.position.set(-0.5, 0.02, 0);
+  squid.add(head);
+  reg('skin', head);
+  const crownG = new THREE.CylinderGeometry(0.34, 0.56, 0.6, 40, 1, true);
+  crownG.rotateZ(Math.PI / 2);
+  const crown = new THREE.Mesh(crownG, skinMaterial());
+  crown.position.set(-1.28, 0, 0);
+  squid.add(crown);
+  reg('arms', crown);
+}
+
+// --- eyes
+{
+  const ic = document.createElement('canvas'); ic.width = ic.height = 256;
+  const g = ic.getContext('2d');
+  const rg = g.createRadialGradient(128, 128, 20, 128, 128, 128);
+  rg.addColorStop(0, '#050608'); rg.addColorStop(0.36, '#050608'); rg.addColorStop(0.4, '#3c4a52');
+  rg.addColorStop(0.62, '#b9c7c9'); rg.addColorStop(0.8, '#d8b36a'); rg.addColorStop(0.97, '#5b3a22'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = rg; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 90; i++) {
+    const a = Math.random() * 6.28, r1 = 50 + Math.random() * 20, r2 = 90 + Math.random() * 30;
+    g.strokeStyle = `rgba(255,255,255,${0.05 + Math.random() * 0.12})`; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(128 + Math.cos(a) * r1, 128 + Math.sin(a) * r1); g.lineTo(128 + Math.cos(a) * r2, 128 + Math.sin(a) * r2); g.stroke();
+  }
+  const irisTex = new THREE.CanvasTexture(ic); irisTex.colorSpace = THREE.SRGBColorSpace;
+  const scleraM = new THREE.MeshPhysicalMaterial({ color: 0xcfd9dc, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.05 });
+  const irisM = new THREE.MeshPhysicalMaterial({ map: irisTex, roughness: 0.2, clearcoat: 1, transparent: true });
+  const corneaM = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.02, transparent: true, opacity: 0.18, clearcoat: 1, clearcoatRoughness: 0 });
+  for (const side of [1, -1]) {
+    const eye = new THREE.Group();
+    eye.position.set(-0.55, 0.12, 0.58 * side);
+    const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.27, 32, 24), scleraM);
+    const iris = new THREE.Mesh(new THREE.CircleGeometry(0.21, 48), irisM);
+    iris.position.z = 0.262 * side;
+    if (side < 0) iris.rotation.y = Math.PI;
+    const cornea = new THREE.Mesh(new THREE.SphereGeometry(0.285, 32, 24), corneaM);
+    eye.add(sclera, iris, cornea);
+    squid.add(eye);
+    reg('eyes', sclera); reg('eyes', iris); reg('eyes', cornea, { pick: false });
+  }
+}
+
+// --- siphon (funnel)
+{
+  const pts = [];
+  for (let i = 0; i <= 20; i++) { const t = i / 20; pts.push(new THREE.Vector2(0.23 - 0.12 * t + 0.05 * Math.pow(t, 6), t * 1.05)); }
+  const g = new THREE.LatheGeometry(pts, 32);
+  g.rotateZ(Math.PI / 2); // +y -> -x
+  const m = new THREE.Mesh(g, organMaterial(0xe9b6a1, { side: THREE.DoubleSide, map: skinTex }));
+  m.position.set(0.15, -0.56, 0);
+  m.rotation.z = 0.12;
+  squid.add(m);
+  reg('siphon', m);
+}
+
+// --- beak
+{
+  const mat = organMaterial(0x2a1a13, { roughness: 0.25, clearcoat: 1 });
+  const upper = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.26, 20), mat);
+  upper.rotation.z = Math.PI / 2 + 0.35; upper.position.set(-1.62, 0.05, 0);
+  const lower = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.22, 20), mat);
+  lower.rotation.z = Math.PI / 2 - 0.3; lower.position.set(-1.6, -0.06, 0);
+  const buccal = new THREE.Mesh(blob(0.16, 0.15, 0.15, 0.04, 9), organMaterial(0xd9a28e));
+  buccal.position.set(-1.45, 0, 0);
+  squid.add(upper, lower, buccal);
+  reg('beak', upper); reg('beak', lower); reg('beak', buccal);
+}
+
+// --- arms & tentacles: tapered tubes rebuilt every frame
+const ARM_N = 40, ARM_M = 10;
+function makeTubeGeometry() {
+  const g = new THREE.BufferGeometry();
+  const count = (ARM_N + 1) * (ARM_M + 1);
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+  const uv = new Float32Array(count * 2);
+  for (let i = 0; i <= ARM_N; i++) for (let j = 0; j <= ARM_M; j++) { const k = i * (ARM_M + 1) + j; uv[k * 2] = j / ARM_M; uv[k * 2 + 1] = i / ARM_N * 0.8; }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  const idx = [];
+  for (let i = 0; i < ARM_N; i++) for (let j = 0; j < ARM_M; j++) {
+    const a = i * (ARM_M + 1) + j, b = a + ARM_M + 1;
+    idx.push(a, b, a + 1, b, b + 1, a + 1);
+  }
+  g.setIndex(idx);
+  return g;
+}
+const _t = new THREE.Vector3(), _n = new THREE.Vector3(), _b = new THREE.Vector3(), _tmp = new THREE.Vector3();
+function updateTube(g, pts, radii, frames) {
+  const pos = g.attributes.position.array;
+  let prevN = null;
+  for (let i = 0; i <= ARM_N; i++) {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(ARM_N, i + 1)];
+    _t.subVectors(b, a).normalize();
+    if (!prevN) { _n.set(0, 1, 0); if (Math.abs(_t.y) > 0.9) _n.set(0, 0, 1); _n.sub(_tmp.copy(_t).multiplyScalar(_n.dot(_t))).normalize(); }
+    else { _n.copy(prevN).sub(_tmp.copy(_t).multiplyScalar(prevN.dot(_t))).normalize(); }
+    prevN = (prevN || new THREE.Vector3()).copy(_n);
+    _b.crossVectors(_t, _n);
+    frames[i].t.copy(_t); frames[i].n.copy(_n); frames[i].b.copy(_b);
+    const r = radii[i];
+    for (let j = 0; j <= ARM_M; j++) {
+      const ang = (j / ARM_M) * Math.PI * 2;
+      const c = Math.cos(ang), s = Math.sin(ang);
+      const k = (i * (ARM_M + 1) + j) * 3;
+      pos[k] = pts[i].x + (c * _n.x + s * _b.x) * r;
+      pos[k + 1] = pts[i].y + (c * _n.y + s * _b.y) * r;
+      pos[k + 2] = pts[i].z + (c * _n.z + s * _b.z) * r;
+    }
+  }
+  g.attributes.position.needsUpdate = true;
+  g.computeVertexNormals();
+  g.computeBoundingSphere();
+}
+
+const limbs = [];
+{
+  const armMat = skinMaterial({ clippingPlanes: [] }); armMat.userData.clipped = false;
+  const tentMat = skinMaterial({ clippingPlanes: [] }); tentMat.userData.clipped = false;
+  const armAngles = [];
+  for (let i = 0; i < 8; i++) armAngles.push((i / 8) * Math.PI * 2 + Math.PI / 8);
+  const mk = (angle, type) => {
+    const o = new THREE.Vector3(0, Math.sin(angle), Math.cos(angle));
+    const isT = type === 'tentacles';
+    const geom = makeTubeGeometry();
+    const mesh = new THREE.Mesh(geom, isT ? tentMat : armMat);
+    mesh.frustumCulled = false;
+    squid.add(mesh);
+    reg(type, mesh);
+    const pts = Array.from({ length: ARM_N + 1 }, () => new THREE.Vector3());
+    const frames = Array.from({ length: ARM_N + 1 }, () => ({ t: new THREE.Vector3(), n: new THREE.Vector3(), b: new THREE.Vector3() }));
+    const radii = new Float32Array(ARM_N + 1);
+    const w = new THREE.Vector3(1, 0, 0).cross(o).normalize();
+    const lenVar = isT ? 4.3 : 2.1 + 0.35 * Math.abs(Math.sin(angle * 1.7));
+    limbs.push({ type, o, w, mesh, geom, pts, frames, radii, len: lenVar, phase: angle * 1.9, base: new THREE.Vector3(-1.5, o.y * (isT ? 0.2 : 0.3), o.z * (isT ? 0.2 : 0.3)) });
+  };
+  armAngles.forEach((a) => mk(a, 'arms'));
+  mk(-Math.PI * 0.5 + 0.55, 'tentacles');
+  mk(-Math.PI * 0.5 - 0.55, 'tentacles');
+}
+// suckers (instanced)
+const SUCK_ARM = 14, SUCK_TENT = 12;
+const suckGeo = new THREE.SphereGeometry(1, 12, 8);
+const suckMat = organMaterial(0xf6ddd0, { roughness: 0.3 });
+const suckTMat = organMaterial(0xf6ddd0, { roughness: 0.3 });
+const armSuckers = new THREE.InstancedMesh(suckGeo, suckMat, 8 * SUCK_ARM * 2);
+const tentSuckers = new THREE.InstancedMesh(suckGeo, suckTMat, 2 * SUCK_TENT * 2);
+armSuckers.frustumCulled = tentSuckers.frustumCulled = false;
+squid.add(armSuckers, tentSuckers);
+reg('arms', armSuckers); reg('tentacles', tentSuckers);
+
+let strike = 0; // tentacle strike 0..1
+const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0), _dir = new THREE.Vector3();
+function updateLimbs(t) {
+  let ai = 0, ti = 0;
+  const amp = reduceMotion ? 0.05 : 0.22;
+  for (const l of limbs) {
+    const isT = l.type === 'tentacles';
+    const len = l.len * (isT ? 1 + 0.28 * strike : 1);
+    const spread = isT ? 0.1 * (1 - strike) : 0.55;
+    for (let i = 0; i <= ARM_N; i++) {
+      const s = i / ARM_N;
+      const sway = Math.sin(t * 1.25 + l.phase + s * 3.2) * amp * s * s * (isT ? 1 - strike * 0.8 : 1);
+      const sway2 = Math.cos(t * 0.9 + l.phase * 1.3 + s * 2.4) * amp * 0.7 * s * s;
+      const p = l.pts[i];
+      p.copy(l.base);
+      p.x -= len * s;
+      p.addScaledVector(l.o, spread * len * Math.pow(s, 1.25) * 0.4 + sway);
+      p.addScaledVector(l.w, sway2);
+      p.y -= (isT ? 0.1 : 0.18) * s * s * (1 - strike);
+      let r;
+      if (isT) { r = 0.075 * (1 - 0.55 * s) + 0.055 * Math.exp(-Math.pow((s - 0.86) / 0.07, 2)); if (s > 0.97) r *= (1 - s) / 0.03 + 0.05; }
+      else r = 0.14 * Math.pow(1 - 0.94 * s, 0.9);
+      l.radii[i] = r;
+    }
+    updateTube(l.geom, l.pts, l.radii, l.frames);
+    // suckers on the oral (inner) side
+    const n = isT ? SUCK_TENT : SUCK_ARM;
+    for (let k = 0; k < n; k++) {
+      const s = isT ? 0.74 + (k / (n - 1)) * 0.22 : 0.12 + (k / (n - 1)) * 0.82;
+      const i = Math.min(ARM_N, Math.round(s * ARM_N));
+      const f = l.frames[i];
+      // inner direction = -o projected on plane normal to tangent
+      _dir.copy(l.o).multiplyScalar(-1);
+      _dir.sub(_tmp.copy(f.t).multiplyScalar(_dir.dot(f.t))).normalize();
+      const side = _tmp.crossVectors(f.t, _dir).normalize();
+      for (const row of [-1, 1]) {
+        const r = l.radii[i];
+        _p.copy(l.pts[i]).addScaledVector(_dir, r * 0.78).addScaledVector(side, row * r * 0.42);
+        _q.setFromUnitVectors(_up, _dir);
+        const sz = r * (isT ? 0.42 : 0.36);
+        _s.set(sz, sz * 0.55, sz);
+        _m4.compose(_p, _q, _s);
+        if (isT) tentSuckers.setMatrixAt(ti++, _m4); else armSuckers.setMatrixAt(ai++, _m4);
+      }
+    }
+  }
+  armSuckers.instanceMatrix.needsUpdate = true; tentSuckers.instanceMatrix.needsUpdate = true;
+  armSuckers.computeBoundingSphere(); tentSuckers.computeBoundingSphere();
+}
+
+// --- internal organs
+const organs = new THREE.Group(); squid.add(organs);
+const hearts = {};
+{
+  // gladius (pen)
+  const segs = 60, verts = [], idx = [];
+  for (let i = 0; i <= segs; i++) {
+    const x = 0.05 + (i / segs) * 6.0, t = i / segs;
+    const w = 0.3 * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.05)), 0.7) + 0.02;
+    const y = mantleR(x) * 0.84;
+    for (const k of [-1, -0.5, 0, 0.5, 1]) verts.push(x, y - 0.35 * (k * w) * (k * w), k * w);
+  }
+  for (let i = 0; i < segs; i++) for (let j = 0; j < 4; j++) { const a = i * 5 + j, b = a + 5; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, organMaterial(0xf0d59a, { transparent: true, opacity: 0.62, side: THREE.DoubleSide, roughness: 0.15, clearcoat: 1, depthWrite: false }));
+  organs.add(m); reg('gladius', m);
+  const rachis = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([0.1, 1.5, 3, 4.5, 6].map((x) => new THREE.Vector3(x, mantleR(x) * 0.84, 0))), 40, 0.025, 8), organMaterial(0xe6c27a, { transparent: true, opacity: 0.8 }));
+  organs.add(rachis); reg('gladius', rachis);
+}
+const add = (id, geom, color, pos, extra = {}) => {
+  const m = new THREE.Mesh(geom, organMaterial(color, extra));
+  m.position.set(...pos); organs.add(m); reg(id, m); return m;
+};
+add('digestive', blob(1.15, 0.42, 0.44, 0.06, 2), 0x7c3136, [1.35, 0.22, 0]);
+add('ink', blob(0.5, 0.15, 0.16, 0.04, 5), 0x14141c, [1.1, -0.26, 0.14], { roughness: 0.18, metalness: 0.35, clearcoat: 1 });
+add('stomach', blob(0.46, 0.28, 0.27, 0.05, 7), 0xe9dabd, [2.75, 0.02, 0.2]);
+add('caecum', blob(0.62, 0.25, 0.24, 0.12, 11), 0xd8ae48, [3.5, 0.0, -0.1]);
+add('gonad', blob(0.95, 0.26, 0.27, 0.1, 13, 56), 0xf1b395, [4.5, 0.05, 0]);
+hearts.systemic = add('heart', blob(0.21, 0.17, 0.18, 0.08, 4), 0xc1352a, [3.05, -0.18, 0.02]);
+hearts.b1 = add('branchial', blob(0.13, 0.13, 0.13, 0.08, 6), 0x9c2a3a, [3.3, -0.22, 0.5]);
+hearts.b2 = add('branchial', blob(0.13, 0.13, 0.13, 0.08, 8), 0x9c2a3a, [3.3, -0.22, -0.5]);
+// brain: ring around oesophagus + optic lobes
+{
+  const tg = new THREE.TorusGeometry(0.13, 0.1, 16, 36); tg.rotateY(Math.PI / 2);
+  add('brain', tg, 0xf0e2cf, [-0.62, 0.06, 0]);
+  add('brain', blob(0.16, 0.15, 0.1, 0.1, 21), 0xeddcc6, [-0.58, 0.1, 0.24]);
+  add('brain', blob(0.16, 0.15, 0.1, 0.1, 22), 0xeddcc6, [-0.58, 0.1, -0.24]);
+}
+// gills: rows of lamellae
+const gillMeshes = [];
+{
+  const lam = new THREE.SphereGeometry(1, 14, 10);
+  const gm = organMaterial(0xd8788a, { roughness: 0.5 });
+  for (const side of [1, -1]) {
+    const n = 26;
+    const im = new THREE.InstancedMesh(lam, gm, n);
+    const x0 = 1.35, x1 = 3.2;
+    for (let i = 0; i < n; i++) {
+      const u = i / (n - 1);
+      const size = 0.05 + 0.17 * Math.pow(Math.sin(Math.PI * (0.15 + 0.85 * u)), 0.7);
+      _m4.compose(_p.set(x0 + (x1 - x0) * u, -0.2, 0.52 * side), _q.identity(), _s.set(0.028, size, size * 0.85));
+      im.setMatrixAt(i, _m4);
+    }
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, x1 - x0, 10).rotateZ(Math.PI / 2), organMaterial(0xb35a6c));
+    stem.position.set((x0 + x1) / 2, -0.2, 0.52 * side);
+    organs.add(im, stem); reg('gills', im); reg('gills', stem);
+    gillMeshes.push(im);
+  }
+}
+// tubes: oesophagus, intestine, vessels, nerves
+const tube = (id, ptsArr, r, color, extra = {}) => {
+  const c = new THREE.CatmullRomCurve3(ptsArr.map((p) => new THREE.Vector3(...p)));
+  const m = new THREE.Mesh(new THREE.TubeGeometry(c, 64, r, 10), organMaterial(color, extra));
+  organs.add(m); reg(id, m); return c;
+};
+tube('stomach', [[-1.35, 0, 0], [-0.62, 0.06, 0], [0.2, 0.08, 0.06], [1.2, 0.02, 0.36], [2.1, 0.05, 0.3], [2.4, 0.03, 0.22]], 0.04, 0xe3c4ad);
+tube('caecum', [[3.1, -0.05, -0.1], [2.3, -0.28, -0.05], [1.3, -0.33, 0.0], [0.45, -0.4, 0.02], [0.2, -0.46, 0.0]], 0.045, 0xcaa085);
+const blue = { emissive: new THREE.Color(0x1d3fa0), emissiveIntensity: 0.35, roughness: 0.3 };
+const vessels = [
+  tube('heart', [[3.05, -0.18, 0], [2.2, -0.12, -0.02], [1.0, -0.05, -0.05], [0.0, -0.02, -0.02], [-0.6, -0.1, 0]], 0.028, 0x4a78e8, blue),
+  tube('heart', [[3.05, -0.18, 0], [3.6, -0.14, 0.05], [4.4, -0.2, 0.0], [5.4, -0.08, 0]], 0.024, 0x4a78e8, blue),
+  tube('branchial', [[3.3, -0.22, 0.5], [2.4, -0.14, 0.5], [1.4, -0.2, 0.52]], 0.024, 0x6a5fd8, blue),
+  tube('branchial', [[3.3, -0.22, -0.5], [2.4, -0.14, -0.5], [1.4, -0.2, -0.52]], 0.024, 0x6a5fd8, blue),
+  tube('heart', [[1.4, -0.26, 0.5], [2.3, -0.3, 0.3], [3.05, -0.2, 0.05]], 0.022, 0x4a78e8, blue),
+  tube('heart', [[1.4, -0.26, -0.5], [2.3, -0.3, -0.3], [3.05, -0.2, -0.05]], 0.022, 0x4a78e8, blue),
+  tube('branchial', [[1.2, -0.1, 0.1], [2.2, -0.35, 0.35], [3.3, -0.22, 0.5]], 0.02, 0x6a5fd8, blue),
+  tube('branchial', [[1.2, -0.1, -0.1], [2.2, -0.35, -0.35], [3.3, -0.22, -0.5]], 0.02, 0x6a5fd8, blue),
+];
+const nerveMat = { emissive: new THREE.Color(0xc9a02a), emissiveIntensity: 0.4, roughness: 0.35 };
+for (const side of [1, -1]) {
+  const gpos = [0.35, 0.34, 0.6 * side];
+  add('axon', blob(0.09, 0.07, 0.05, 0.1, 30 + side), 0xf2cf6b, gpos, nerveMat);
+  tube('axon', [[-0.5, 0.12, 0.12 * side], [-0.1, 0.25, 0.4 * side], gpos], 0.011, 0xf2cf6b, nerveMat);
+  [0.15, 0.55, 0.9].forEach((a, k) => {
+    const pts = [gpos];
+    for (let x = 0.8; x <= 3.6 + k * 0.6; x += 0.7) {
+      const r = mantleR(x) * 0.86, ang = a + (x * 0.03);
+      pts.push([x, r * Math.sin(ang) * 0.94, r * Math.cos(ang) * side]);
+    }
+    tube('axon', pts, 0.008 + (k === 0 ? 0.004 : 0), 0xf2cf6b, nerveMat);
+  });
+}
+
+// blood flow particles
+const flow = (() => {
+  const n = 110, pos = new Float32Array(n * 3), items = [];
+  for (let i = 0; i < n; i++) items.push({ c: vessels[i % vessels.length], u: Math.random(), sp: 0.12 + Math.random() * 0.1 });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.PointsMaterial({ map: dotTex, size: 0.09, color: 0x9fc4ff, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending });
+  const p = new THREE.Points(g, m); p.frustumCulled = false; organs.add(p);
+  return { p, items, pos };
+})();
+
+// jet particles: water and ink
+function jetSystem(color, size, blending, opacity) {
+  const n = 70, pos = new Float32Array(n * 3).fill(999), items = Array.from({ length: n }, () => ({ life: 0, v: new THREE.Vector3() }));
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.PointsMaterial({ map: dotTex, size, color, transparent: true, opacity, depthWrite: false, blending });
+  const p = new THREE.Points(g, m); p.frustumCulled = false; squid.add(p);
+  return { p, pos, items, rate: 0, acc: 0 };
+}
+const bubbles = jetSystem(0xd9f6ff, 0.12, THREE.AdditiveBlending, 0.8);
+const inkCloud = jetSystem(0x0a0a12, 0.6, THREE.NormalBlending, 0.55);
+const siphonMouth = new THREE.Vector3(-0.9, -0.44, 0);
+function updateJet(sys, dt, spread, speed) {
+  sys.acc += sys.rate * dt;
+  for (const it of sys.items) {
+    if (it.life <= 0 && sys.acc >= 1) {
+      sys.acc -= 1; it.life = 1;
+      it.p = siphonMouth.clone();
+      it.v.set(-speed * (0.7 + Math.random() * 0.6), (Math.random() - 0.3) * spread, (Math.random() - 0.5) * spread);
+    }
+  }
+  sys.acc = Math.min(sys.acc, 3);
+  sys.items.forEach((it, i) => {
+    if (it.life > 0) {
+      it.life -= dt * 0.55;
+      it.p.addScaledVector(it.v, dt); it.v.multiplyScalar(1 - dt * 1.2); it.v.y += dt * 0.15;
+      sys.pos[i * 3] = it.p.x; sys.pos[i * 3 + 1] = it.p.y; sys.pos[i * 3 + 2] = it.p.z;
+    } else { sys.pos[i * 3] = 999; }
+  });
+  sys.p.geometry.attributes.position.needsUpdate = true;
+}
+
+/* ------------------------------------------------------------------ */
+/* State, view, camera                                                 */
+/* ------------------------------------------------------------------ */
+const state = { view: 'external', selected: null, hovered: null, concert: null, quiz: null };
+let skinOpacity = 1, skinTarget = 1;
+const HOME = { target: new THREE.Vector3(0.2, 0.25, 0), dir: new THREE.Vector3(0.1, 0.22, 1).normalize(), dist: 11 };
+let fly = null;
+
+function fitDistance() {
+  const aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight);
+  return aspect >= 1.25 ? 16.5 : Math.min(40, 21 / Math.max(aspect, 0.45));
+}
+function flyTo(target, pos, dur = 1.4) {
+  if (reduceMotion) { controls.target.copy(target); camera.position.copy(pos); controls.update(); return; }
+  fly = { t0: performance.now(), dur: dur * 1000, ft: controls.target.clone(), tt: target.clone(), fp: camera.position.clone(), tp: pos.clone() };
+}
+function goHome(instant = false) {
+  const d = fitDistance();
+  const pos = HOME.target.clone().addScaledVector(HOME.dir, d);
+  if (instant) { controls.target.copy(HOME.target); camera.position.copy(pos); controls.update(); }
+  else flyTo(HOME.target, pos, 1.6);
+}
+controls.addEventListener('start', () => { fly = null; });
+
+function anchorWorld(id, out = new THREE.Vector3()) {
+  const p = PART[id];
+  if (id === 'tentacles') { const l = limbs.find((x) => x.type === 'tentacles'); out.copy(l.pts[Math.round(ARM_N * 0.86)]); }
+  else out.set(...p.anchor);
+  return squid.localToWorld(out);
+}
+
+function setView(v) {
+  state.view = v;
+  document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+  skinTarget = v === 'glass' ? 0.18 : 1;
+  clipTarget = v === 'dissect' ? 0.0 : 1.4;
+}
+
+/* ------------------------------------------------------------------ */
+/* UI                                                                  */
+/* ------------------------------------------------------------------ */
+const ui = {
+  move: $('#p-move'), count: $('#p-count'), name: $('#p-name'), latin: $('#p-latin'), meta: $('#p-meta'),
+  desc: $('#p-desc'), why: $('#p-why'), factBox: $('#p-fact-box'), fact: $('#p-fact'), howto: $('#howto'), reset: $('#reset'),
+  pin: $('#pin'), pinLabel: $('#pin-label'), tip: $('#tip'),
+};
+const chipEls = {}, noteEls = {};
+for (const p of PARTS) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'chip'; b.textContent = p.name; b.setAttribute('aria-pressed', 'false');
+  b.addEventListener('click', () => userSelect(p.id));
+  (p.kind === 'ext' ? $('#list-ext') : $('#list-int')).appendChild(b);
+  chipEls[p.id] = b;
+}
+{
+  const staff = $('#staff');
+  MOVEMENTS.forEach((m) => {
+    const bar = document.createElement('div'); bar.className = 'bar';
+    const tt = document.createElement('span'); tt.className = 'bar-title'; tt.textContent = m.title; bar.appendChild(tt);
+    m.parts.forEach((id) => {
+      const p = PART[id];
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'note'; b.setAttribute('aria-pressed', 'false');
+      b.setAttribute('aria-label', `${p.name} — ${p.instr}`);
+      b.title = `${p.name} · ${p.instr}`;
+      const h = document.createElement('span'); h.className = 'head'; h.style.top = `${64 - p.deg * 5}px`;
+      const lb = document.createElement('span'); lb.className = 'lbl'; lb.textContent = p.short;
+      b.append(h, lb);
+      b.addEventListener('click', () => userSelect(id));
+      bar.appendChild(b); noteEls[id] = b;
+    });
+    staff.appendChild(bar);
+  });
+}
+
+function renderPanel(id, movementIdx) {
+  if (!id) {
+    ui.move.textContent = 'قبل العزف'; ui.count.textContent = '';
+    ui.name.textContent = 'أوركسترا في جسد واحد';
+    ui.latin.textContent = 'Loligo · Decapodiformes';
+    ui.meta.innerHTML = '<span class="kind">٨ أجزاء خارجية</span><span class="kind int">١١ جزءًا داخليًا</span>';
+    ui.desc.textContent = 'الحبّار رخوي سريع بلا صدفة خارجية. لكل جزء فيه دور يشبه دور آلة في فرقة موسيقية: قلوب تضبط الإيقاع، وخياشيم تتنفس كالأوتار، ودماغ يقود الجميع.';
+    ui.why.hidden = true; ui.fact.hidden = true; ui.howto.hidden = false;
+    ui.factBox.querySelector('h3').textContent = 'كيف تستكشف';
+    ui.reset.hidden = true;
+    return;
+  }
+  const p = PART[id];
+  const mi = movementIdx ?? MOVE_OF[id];
+  const m = MOVEMENTS[mi];
+  ui.move.textContent = `${m.n} · ${m.title}`;
+  ui.count.textContent = `${arNum(PARTS.indexOf(p) + 1)} / ${arNum(PARTS.length)}`;
+  ui.name.textContent = p.name;
+  ui.latin.textContent = p.latin;
+  ui.meta.innerHTML = '';
+  const k = document.createElement('span'); k.className = 'kind' + (p.kind === 'int' ? ' int' : ''); k.textContent = p.kind === 'int' ? 'جزء داخلي' : 'جزء خارجي';
+  const ins = document.createElement('span'); ins.innerHTML = 'الآلة: <b></b>'; ins.querySelector('b').textContent = p.instr;
+  ui.meta.append(k, ins);
+  ui.desc.textContent = p.desc;
+  ui.why.textContent = p.why; ui.why.hidden = false;
+  ui.factBox.querySelector('h3').textContent = 'هل تعلم؟';
+  ui.fact.textContent = p.fact; ui.fact.hidden = false; ui.howto.hidden = true;
+  ui.reset.hidden = false;
+  $('#panel').scrollTop = 0;
+}
+
+function select(id, { fly: doFly = true, sound = true, movement } = {}) {
+  state.selected = id;
+  for (const [pid, el] of Object.entries(chipEls)) el.setAttribute('aria-pressed', String(pid === id));
+  for (const [pid, el] of Object.entries(noteEls)) el.setAttribute('aria-pressed', String(pid === id));
+  renderPanel(id, movement);
+  if (!id) { ui.pin.hidden = true; return; }
+  const p = PART[id];
+  if (p.kind === 'int' && state.view === 'external') setView('dissect');
+  ui.pinLabel.textContent = p.name;
+  ui.pin.hidden = false;
+  if (sound) Sound.play(id);
+  if (id === 'tentacles') strike = 0.001;
+  if (doFly) {
+    const tgt = anchorWorld(id);
+    const dir = new THREE.Vector3(...p.cam.dir).normalize();
+    flyTo(tgt, tgt.clone().addScaledVector(dir, p.cam.dist * (fitDistance() / 11.5)), 1.3);
+  }
+  noteEls[id].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+}
+function userSelect(id) {
+  if (state.concert) stopConcert();
+  select(id);
+}
+
+// view buttons
+document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
+ui.reset.addEventListener('click', () => { if (state.concert) stopConcert(); select(null); goHome(); });
+
+// sound
+const soundBtn = $('#sound');
+function setSound(on) {
+  if (on && !Sound.init()) { soundBtn.textContent = 'الصوت غير مدعوم'; return; }
+  Sound.on = on;
+  soundBtn.setAttribute('aria-pressed', String(on));
+  soundBtn.textContent = on ? 'الصوت يعمل' : 'الصوت مغلق';
+}
+soundBtn.addEventListener('click', () => setSound(!Sound.on));
+
+// concert
+const playBtn = $('#play');
+function stopConcert() {
+  if (!state.concert) return;
+  state.concert.timers.forEach(clearTimeout);
+  state.concert = null;
+  playBtn.textContent = '▶ عزف السمفونية';
+  Object.values(noteEls).forEach((n) => n.classList.remove('done'));
+}
+function startConcert() {
+  if (state.quiz) endQuiz();
+  if (!Sound.on) setSound(true);
+  const seq = [];
+  MOVEMENTS.forEach((m, mi) => m.parts.forEach((id) => seq.push({ id, mi })));
+  const step = 3900;
+  const c = (state.concert = { timers: [] });
+  playBtn.textContent = '■ إيقاف العزف';
+  setView('external');
+  Object.values(noteEls).forEach((n) => n.classList.remove('done'));
+  seq.forEach((s, i) => {
+    c.timers.push(setTimeout(() => {
+      if (state.concert !== c) return;
+      if (i > 0) noteEls[seq[i - 1].id].classList.add('done');
+      if (PART[s.id].kind === 'int' && state.view !== 'dissect') setView('dissect');
+      select(s.id, { movement: s.mi });
+    }, 600 + i * step));
+  });
+  c.timers.push(setTimeout(() => {
+    if (state.concert !== c) return;
+    Sound.finale();
+    select(null); goHome();
+    ui.move.textContent = 'انتهت السمفونية';
+    ui.name.textContent = 'تسعة عشر عازفًا، كائن واحد';
+    ui.desc.textContent = 'سمعت الآن كل جزء من الحبّار في مكانه. اختر أي نوتة لتعيد عزفها، أو اضغط «اختبرني» لتتحقق مما تعلمته.';
+    stopConcert();
+  }, 600 + seq.length * step + 400));
+}
+playBtn.addEventListener('click', () => (state.concert ? stopConcert() : startConcert()));
+
+// quiz
+const quizBtn = $('#quiz'), quizbar = $('#quizbar');
+function nextQuestion() {
+  const q = state.quiz;
+  const pool = PARTS.filter((p) => !q.asked.includes(p.id));
+  if (!pool.length) q.asked = [];
+  const p = (pool.length ? pool : PARTS)[(Math.random() * (pool.length || PARTS.length)) | 0];
+  q.target = p.id; q.asked.push(p.id); q.locked = false;
+  $('#q-target').textContent = p.name;
+  $('#q-fb').textContent = ''; $('#q-fb').className = 'fb';
+  $('#q-score').textContent = `${arNum(q.right)} / ${arNum(q.total)}`;
+  if (p.kind === 'int') setView('dissect');
+}
+function startQuiz() {
+  stopConcert();
+  state.quiz = { right: 0, total: 0, asked: [], target: null, locked: false };
+  quizBtn.setAttribute('aria-pressed', 'true');
+  quizbar.hidden = false;
+  select(null, { fly: false }); goHome();
+  setView('dissect');
+  nextQuestion();
+}
+function endQuiz() {
+  state.quiz = null; quizbar.hidden = true; quizBtn.setAttribute('aria-pressed', 'false');
+}
+function answer(id) {
+  const q = state.quiz; if (!q || q.locked) return;
+  q.total++;
+  const fb = $('#q-fb');
+  if (id === q.target) {
+    q.right++; q.locked = true;
+    fb.textContent = 'صحيح'; fb.className = 'fb ok';
+    select(id, { fly: false });
+    setTimeout(() => state.quiz === q && nextQuestion(), 1700);
+  } else {
+    fb.textContent = `هذا ${PART[id].name}`; fb.className = 'fb no';
+  }
+  $('#q-score').textContent = `${arNum(q.right)} / ${arNum(q.total)}`;
+}
+quizBtn.addEventListener('click', () => (state.quiz ? endQuiz() : startQuiz()));
+$('#q-end').addEventListener('click', endQuiz);
+
+/* ------------------------------------------------------------------ */
+/* Picking                                                             */
+/* ------------------------------------------------------------------ */
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+function pick(clientX, clientY) {
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hits = ray.intersectObjects(pickables, false).filter((h) => {
+    const m = h.object.material;
+    if (m.userData.clipped && clipPlane.constant < 5 && h.point.z > clipPlane.constant) return false;
+    return true;
+  });
+  if (!hits.length) return null;
+  if (state.view !== 'external') {
+    const skinFirst = hits[0].object.material.userData.clipped;
+    if (skinFirst) {
+      const organ = hits.find((h) => PART[h.object.userData.part].kind === 'int');
+      if (organ && state.view === 'glass') return organ.object.userData.part;
+    }
+  }
+  return hits[0].object.userData.part;
+}
+let down = null, hoverQueued = null;
+canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerup', (e) => {
+  if (!down) return;
+  const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+  down = null;
+  if (moved > 6) return;
+  const id = pick(e.clientX, e.clientY);
+  if (!id) return;
+  if (state.quiz) answer(id); else userSelect(id);
+});
+canvas.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') hoverQueued = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerleave', () => { hoverQueued = null; state.hovered = null; ui.tip.hidden = true; canvas.classList.remove('hovering'); });
+
+/* ------------------------------------------------------------------ */
+/* Layout                                                              */
+/* ------------------------------------------------------------------ */
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  const panel = $('#panel').getBoundingClientRect();
+  const top = document.querySelector('.top').getBoundingClientRect();
+  const score = document.querySelector('.score').getBoundingClientRect();
+  if (w > 760) {
+    const shiftX = (panel.width + 16) / 2;
+    const shiftY = ((h - score.top) - top.bottom) / 2;
+    camera.setViewOffset(w, h, shiftX, Math.max(0, shiftY) * 0.6, w, h);
+  } else {
+    const shiftY = ((h - panel.top) - top.bottom) / 2;
+    camera.setViewOffset(w, h, 0, shiftY, w, h);
+  }
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(canvas);
+new ResizeObserver(resize).observe($('#panel'));
+resize();
+goHome(true);
+
+/* ------------------------------------------------------------------ */
+/* Loop                                                                */
+/* ------------------------------------------------------------------ */
+const clock = new THREE.Clock();
+const _v = new THREE.Vector3();
+let frame = 0, lastBeat = 0;
+const pulse = (x) => { const p = x - Math.floor(x); return Math.exp(-Math.pow((p - 0.08) / 0.05, 2)) + 0.55 * Math.exp(-Math.pow((p - 0.27) / 0.05, 2)); };
+const hl = new THREE.Color(0xf2896b);
+
+function setEmissive(id, color, intensity) {
+  partMats[id]?.forEach((m) => {
+    if (!m.emissive) return;
+    if (color) { m.emissive.copy(color); m.emissiveIntensity = intensity; }
+    else if (m.userData.baseEmissive) { m.emissive.copy(m.userData.baseEmissive); m.emissiveIntensity = m.userData.baseEI; }
+  });
+}
+
+function tick() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+  frame++;
+
+  // camera flight
+  if (fly) {
+    const k = Math.min(1, (performance.now() - fly.t0) / fly.dur);
+    const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    controls.target.lerpVectors(fly.ft, fly.tt, e);
+    camera.position.lerpVectors(fly.fp, fly.tp, e);
+    if (k >= 1) fly = null;
+  }
+  controls.update();
+
+  // hover
+  if (hoverQueued) {
+    const id = pick(hoverQueued.x, hoverQueued.y);
+    state.hovered = id;
+    canvas.classList.toggle('hovering', !!id);
+    if (id) {
+      ui.tip.hidden = false;
+      ui.tip.textContent = PART[id].name;
+      const r = canvas.getBoundingClientRect();
+      ui.tip.style.transform = `translate(${hoverQueued.x - r.left + 14}px, ${hoverQueued.y - r.top + 16}px)`;
+    } else ui.tip.hidden = true;
+    hoverQueued = null;
+  }
+
+  // swimming body
+  const m = reduceMotion ? 0.2 : 1;
+  squid.position.y = Math.sin(t * 0.55) * 0.12 * m;
+  squid.rotation.z = 0.2 + Math.sin(t * 0.4) * 0.03 * m;
+  const breath = Math.sin(t * 1.5);
+  mantleGroup.scale.set(1, 1 + 0.025 * breath * m, 1 + 0.025 * breath * m);
+  fins.forEach((f) => { f.rotation.x = f.userData.side * Math.sin(t * 2.1) * 0.16 * m; });
+  gillMeshes.forEach((g) => g.scale.set(1, 1 + 0.06 * breath * m, 1 + 0.06 * breath * m));
+
+  // hearts
+  const hp = pulse(t * 1.05), bp = pulse(t * 1.05 - 0.18);
+  const hs = state.selected === 'heart' ? 0.22 : 0.12, bs = state.selected === 'branchial' ? 0.3 : 0.14;
+  hearts.systemic.scale.setScalar(1 + hs * hp * m);
+  hearts.b1.scale.setScalar(1 + bs * bp * m); hearts.b2.scale.setScalar(1 + bs * bp * m);
+  if (state.concert && MOVEMENTS[2].parts.includes(state.selected)) {
+    const beatN = Math.floor(t * 1.05);
+    if (beatN !== lastBeat) { lastBeat = beatN; Sound.heartbeat(); }
+  }
+
+  // tentacle strike
+  if (strike > 0) { strike += dt * 1.3; if (strike > 2) strike = 0; }
+  const strikeVal = strike > 0 ? (strike < 0.25 ? strike / 0.25 : Math.max(0, 1 - (strike - 0.6) / 1.2)) : 0;
+  const saved = strike; strike = strikeVal; updateLimbs(t); strike = saved;
+
+  // skin
+  const skinEnergy = state.selected === 'skin' ? 1 : 0;
+  if (skinEnergy ? frame % 2 === 0 : frame % 6 === 0) drawSkin(t, skinEnergy);
+  skinOpacity += (skinTarget - skinOpacity) * Math.min(1, dt * 4);
+  clipVal += (clipTarget - clipVal) * Math.min(1, dt * 3);
+  clipPlane.constant = clipVal > CLIP_OFF ? 50 : clipVal;
+  for (const mat of skinMats) {
+    const armLike = !mat.userData.clipped;
+    const op = armLike ? Math.max(skinOpacity, 0.55) : skinOpacity;
+    mat.opacity = op;
+    mat.depthWrite = op > 0.95;
+  }
+  inner.intensity = THREE.MathUtils.lerp(inner.intensity, state.view === 'external' ? 0 : 7, Math.min(1, dt * 3));
+
+  // blood flow
+  flow.items.forEach((it, i) => {
+    it.u = (it.u + it.sp * dt * (1 + hp)) % 1;
+    it.c.getPointAt(it.u, _v);
+    flow.pos[i * 3] = _v.x; flow.pos[i * 3 + 1] = _v.y; flow.pos[i * 3 + 2] = _v.z;
+  });
+  flow.p.geometry.attributes.position.needsUpdate = true;
+  flow.p.material.opacity = state.view === 'external' ? 0 : 0.9;
+
+  // jets
+  bubbles.rate = state.selected === 'siphon' || state.selected === 'mantle' ? 30 : 2;
+  inkCloud.rate = state.selected === 'ink' ? 10 : 0;
+  updateJet(bubbles, dt, 0.5, 2.4);
+  updateJet(inkCloud, dt, 0.9, 1.4);
+
+  // highlight
+  for (const p of PARTS) {
+    if (p.id === state.selected) setEmissive(p.id, hl, 0.25 + 0.2 * (0.5 + 0.5 * Math.sin(t * 4)));
+    else if (p.id === state.hovered) setEmissive(p.id, hl, 0.22);
+    else setEmissive(p.id, null);
+  }
+
+  // ambience
+  const sp = snow.geometry.attributes.position;
+  for (let i = 0; i < sp.count; i++) {
+    let y = sp.getY(i) - dt * 0.12;
+    if (y < -11) y = 11;
+    sp.setY(i, y);
+  }
+  sp.needsUpdate = true;
+  shafts.forEach((s) => { s.material.opacity = 0.06 + 0.05 * (0.5 + 0.5 * Math.sin(t * 0.5 + s.userData.phase)); });
+
+  renderer.render(scene, camera);
+
+  // pin
+  if (state.selected) {
+    anchorWorld(state.selected, _v).project(camera);
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const x = (_v.x * 0.5 + 0.5) * w, y = (-_v.y * 0.5 + 0.5) * h;
+    ui.pin.hidden = _v.z > 1;
+    ui.pin.style.transform = `translate(${x}px, ${y}px)`;
+  }
+  requestAnimationFrame(tick);
+}
+$('#loading').hidden = true;
+requestAnimationFrame(tick);
+</script>
