@@ -283,6 +283,91 @@
   .quizbar .fb.no { color: #b3261e; }
   .quizbar button { border: 0; background: var(--abyss); color: var(--ink); border-radius: 999px; padding: 5px 12px; cursor: pointer; font-size: 13px; }
 
+  /* the illustrated plate (user's image) */
+  .plate-stage {
+    position: absolute;
+    top: 132px;
+    bottom: 156px;
+    inset-inline-start: 392px;
+    inset-inline-end: 16px;
+    display: grid;
+    place-items: center;
+    container-type: size;
+    pointer-events: none;
+    perspective: 1400px;
+  }
+  .plate {
+    position: relative;
+    width: min(100cqw, 100cqh * 1312 / 1199);
+    aspect-ratio: 1312 / 1199;
+    pointer-events: auto;
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 0.35s ease-out;
+  }
+  .plate img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    border-radius: 18px;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 95%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 95%, transparent);
+    mask-composite: intersect;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .plate .spot {
+    position: absolute; inset: 0;
+    border-radius: 18px;
+    background: radial-gradient(circle at var(--sx, 50%) var(--sy, 50%), transparent 0 8%, rgba(2, 10, 16, 0.6) 26%);
+    opacity: 0;
+    transition: opacity 0.5s, background-position 0.5s;
+    pointer-events: none;
+  }
+  .plate.focus .spot { opacity: 1; }
+  .hotspots { position: absolute; inset: 0; transform: translateZ(40px); transform-style: preserve-3d; }
+  .hs {
+    position: absolute;
+    width: 30px; height: 30px;
+    margin: -15px 0 0 -15px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+  }
+  .hs::before {
+    content: "";
+    position: absolute; inset: 8px;
+    border-radius: 50%;
+    background: rgba(234, 243, 240, 0.92);
+    box-shadow: 0 0 0 3px rgba(3, 18, 28, 0.35), 0 0 0 0 rgba(234, 243, 240, 0.5);
+    animation: breathe 2.8s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+  .hs .hs-lbl {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 10px 4px;
+    border-radius: 8px;
+    background: rgba(3, 18, 28, 0.86);
+    color: var(--ink);
+    font-family: var(--display);
+    font-size: 17px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .hs:hover .hs-lbl, .hs:focus-visible .hs-lbl, .hs[aria-pressed="true"] .hs-lbl { opacity: 1; }
+  .hs[aria-pressed="true"]::before { background: var(--coral); inset: 6px; box-shadow: 0 0 0 3px rgba(3, 18, 28, 0.4), 0 0 18px 4px rgba(242, 137, 107, 0.7); }
+  .plate.quiz .hs:not([aria-pressed="true"]) .hs-lbl { opacity: 0; }
+  .hs.int::before { background: rgba(255, 214, 196, 0.95); }
+  @keyframes breathe { 0%, 100% { box-shadow: 0 0 0 3px rgba(3, 18, 28, 0.35), 0 0 0 0 rgba(234, 243, 240, 0.45); } 50% { box-shadow: 0 0 0 3px rgba(3, 18, 28, 0.35), 0 0 0 9px rgba(234, 243, 240, 0); } }
+
   .loading {
     position: absolute; inset: 0;
     display: grid; place-items: center;
@@ -312,15 +397,26 @@
     .panel h2 { font-size: 26px; }
     .score { inset-inline: 12px; padding: 6px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
     .score-label { display: none; }
+    .plate-stage { top: 116px; bottom: calc(env(safe-area-inset-bottom, 0px) + 126px + 32% + 6px); inset-inline: 8px; }
+    .hs .hs-lbl { font-size: 15px; }
     .quizbar { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 126px); max-width: calc(100% - 24px); flex-wrap: wrap; justify-content: center; border-radius: 16px; white-space: normal; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .pin-dot { animation: none; }
+    .pin-dot, .hs::before { animation: none; }
+    .plate { transition: none; }
   }
 </style>
 
 <div id="app" dir="rtl" lang="ar">
   <canvas id="scene" aria-label="مجسم ثلاثي الأبعاد للحبار يمكن تدويره والضغط على أجزائه"></canvas>
+
+  <div class="plate-stage" id="plate-stage" hidden>
+    <div class="plate" id="plate">
+      <img src="squid-plate.webp" alt="لوحة لحبّار يسبح تحت الماء، نصف ردائه مكشوف فتظهر أعضاؤه الداخلية" draggable="false">
+      <div class="spot"></div>
+      <div class="hotspots" id="hotspots"></div>
+    </div>
+  </div>
 
   <div class="pin" id="pin" hidden><span class="pin-line"></span><span class="pin-dot"></span><span class="pin-label" id="pin-label"></span></div>
   <div class="tip" id="tip" hidden></div>
@@ -332,7 +428,8 @@
     </div>
     <div class="controls">
       <div class="seg" role="group" aria-label="طريقة العرض">
-        <button type="button" data-view="external" aria-pressed="true">خارجي</button>
+        <button type="button" data-view="plate" aria-pressed="true">اللوحة</button>
+        <button type="button" data-view="external" aria-pressed="false">خارجي</button>
         <button type="button" data-view="glass" aria-pressed="false">شفاف</button>
         <button type="button" data-view="dissect" aria-pressed="false">تشريح</button>
       </div>
@@ -352,8 +449,9 @@
     <div class="fact" id="p-fact-box">
       <h3>كيف تستكشف</h3>
       <ul class="howto" id="howto">
-        <li><b>اسحب</b> لتدوير المجسم، و<b>مرّر أو قرّب بإصبعين</b> للتكبير.</li>
-        <li>اختر <b>تشريح</b> لكشف الأعضاء الداخلية، أو <b>شفاف</b> لرؤيتها عبر الجلد.</li>
+        <li>في المجسم: <b>اسحب</b> للتدوير، و<b>مرّر أو قرّب بإصبعين</b> للتكبير.</li>
+        <li>تبدأ بـ<b>اللوحة</b>: الصورة المشرّحة للحبّار. حرّك المؤشر فوقها واضغط على النقاط المضيئة.</li>
+        <li>انتقل إلى <b>خارجي</b> لتدوير المجسم ثلاثي الأبعاد، و<b>تشريح</b> لكشف أعضائه، و<b>شفاف</b> لرؤيتها عبر الجلد.</li>
         <li>اضغط على أي جزء أو نوتة في المدوّنة بالأسفل.</li>
         <li>شغّل <b>الصوت</b> ثم اضغط <b>عزف السمفونية</b> لجولة من خمس حركات.</li>
       </ul>
@@ -505,6 +603,12 @@ const PARTS = [
     fact: 'تعيش معظم أنواع الحبّار نحو سنة أو سنتين، وتتكاثر مرة واحدة في آخر حياتها.',
     anchor: [4.5, 0.05, 0.2], cam: { dir: [0.2, 0.45, 1], dist: 3.2 } },
 ];
+const PLATE = {
+  fins: [1190, 320], mantle: [545, 432], skin: [440, 560], eyes: [522, 600], siphon: [645, 636],
+  arms: [330, 760], tentacles: [140, 1060], beak: [430, 668],
+  brain: [578, 552], digestive: [722, 438], ink: [655, 522], caecum: [772, 562], stomach: [812, 462],
+  gonad: [852, 332], heart: [1015, 312], branchial: [1112, 272], gills: [962, 482], gladius: [905, 228], axon: [748, 372],
+};
 const PART = Object.fromEntries(PARTS.map((p) => [p.id, p]));
 
 const MOVEMENTS = [
@@ -529,19 +633,86 @@ const Sound = {
     const ctx = (this.ctx = new C());
     const comp = ctx.createDynamicsCompressor();
     comp.connect(ctx.destination);
+    this.master = ctx.createGain();
+    this.master.gain.value = 0;
+    this.master.connect(comp);
+    // music bus: quiet, rounded off, bathed in a long reverb
     this.out = ctx.createGain();
-    this.out.gain.value = 0.6;
-    this.out.connect(comp);
+    this.out.gain.value = 0.2;
+    const soft = ctx.createBiquadFilter();
+    soft.type = 'lowpass'; soft.frequency.value = 2000; soft.Q.value = 0.5;
+    this.out.connect(soft); soft.connect(this.master);
     const rev = ctx.createConvolver();
-    rev.buffer = this.impulse(3.4, 2.6);
+    rev.buffer = this.impulse(4.5, 2.2);
     const wet = ctx.createGain();
-    wet.gain.value = 0.32;
-    this.out.connect(rev); rev.connect(wet); wet.connect(comp);
-    const len = ctx.sampleRate;
+    wet.gain.value = 0.55;
+    soft.connect(rev); rev.connect(wet); wet.connect(this.master);
+    const len = ctx.sampleRate * 4;
     this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    this.startSea();
     return true;
+  },
+  // light sea: slow swells of filtered noise, a faint surf hiss, stray bubbles and a barely-there pad
+  startSea() {
+    const ctx = this.ctx;
+    const sea = (this.sea = ctx.createGain());
+    sea.gain.value = 1;
+    sea.connect(this.master);
+    const layer = (fc, type, q, level, rate, depth) => {
+      const src = ctx.createBufferSource(); src.buffer = this.noiseBuf; src.loop = true;
+      const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = fc; f.Q.value = q;
+      const g = ctx.createGain(); g.gain.value = level;
+      const lfo = ctx.createOscillator(); lfo.frequency.value = rate;
+      const lg = ctx.createGain(); lg.gain.value = depth;
+      lfo.connect(lg); lg.connect(g.gain);
+      src.connect(f); f.connect(g); g.connect(sea);
+      src.start(); lfo.start();
+    };
+    layer(380, 'lowpass', 0.4, 0.09, 0.07, 0.06);   // deep swell
+    layer(900, 'bandpass', 0.35, 0.025, 0.11, 0.02); // surf wash
+    layer(3200, 'bandpass', 0.6, 0.006, 0.05, 0.005); // far-off fizz
+    // soft pad drifting through pentatonic chords
+    const chords = [[0, 4, 7], [2, 5, 9], [-1, 2, 7], [0, 3, 5]];
+    let ci = 0;
+    const pad = () => {
+      if (!this.ctx) return;
+      if (this.on) {
+        const t = ctx.currentTime + 0.05;
+        chords[ci % chords.length].forEach((k) => {
+          const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = this.freq(k, 0);
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(0.018, t + 3.5);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 9.5);
+          o.connect(g); g.connect(sea); o.start(t); o.stop(t + 9.6);
+        });
+        ci++;
+      }
+      setTimeout(pad, 8000);
+    };
+    pad();
+    const bubble = () => {
+      if (!this.ctx) return;
+      if (this.on) {
+        const t = ctx.currentTime + 0.02, f0 = 500 + Math.random() * 500;
+        const o = ctx.createOscillator(); o.type = 'sine';
+        o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 2.2, t + 0.07);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.012, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+        o.connect(g); g.connect(sea); o.start(t); o.stop(t + 0.1);
+      }
+      setTimeout(bubble, 700 + Math.random() * 3200);
+    };
+    bubble();
+  },
+  fade(on) {
+    if (!this.ctx) return;
+    const g = this.master.gain, t = this.ctx.currentTime;
+    g.cancelScheduledValues(t);
+    g.setValueAtTime(g.value, t);
+    g.linearRampToValueAtTime(on ? 1 : 0, t + (on ? 2.5 : 0.6));
   },
   impulse(sec, decay) {
     const ctx = this.ctx, len = Math.floor(ctx.sampleRate * sec);
@@ -616,9 +787,9 @@ const Sound = {
       case 'flute': this.tone({ t, f: F(1), types: ['sine', 'triangle'], mult: [1, 2], mix: [1, 0.12], a: 0.14, h: 0.55, r: 0.7, peak: 0.17, vib: 12 }); this.noise(t, 0.25, 2500, 'bandpass', 0.03); break;
       case 'trombone': this.tone({ t, f: F(-1) * 0.94, types: [saw], a: 0.05, h: 0.05, r: 0.05, fc: 500, peak: 0.08 }); this.tone({ t: t + 0.12, f: F(-1), types: [saw, saw], dets: [-5, 5], a: 0.06, h: 0.5, r: 0.6, fc: 420, fc2: 1300, peak: 0.13 }); break;
       case 'violin': this.tone({ t, f: F(1), types: [saw, saw], dets: [-8, 8], a: 0.18, h: 0.6, r: 0.8, fc: 2600, peak: 0.08, vib: 14 }); break;
-      case 'cymbal': this.noise(t, 1.1, 6000, 'highpass', 0.14); this.tone({ t, f: F(2), types: ['square'], a: 0.002, h: 0.01, r: 0.12, fc: 3000, peak: 0.05 }); break;
-      case 'drum': [0, 0.2].forEach((dt) => this.tone({ t: t + dt, f: F(-1), types: ['sine'], drop: 2, a: 0.004, h: 0.04, r: 0.35, peak: 0.45 })); break;
-      case 'timpani': this.tone({ t, f: F(-1), types: ['sine', 'sine'], mult: [1, 1.5], mix: [1, 0.3], drop: 1.5, a: 0.004, h: 0.1, r: 1.1, peak: 0.55 }); this.noise(t, 0.15, 400, 'lowpass', 0.15); break;
+      case 'cymbal': this.noise(t, 1.4, 5000, 'bandpass', 0.04); this.tone({ t, f: F(1), types: ['sine', 'sine'], mult: [1, 2.76], mix: [1, 0.3], a: 0.01, h: 0.02, r: 1.6, peak: 0.1 }); break;
+      case 'drum': [0, 0.2].forEach((dt) => this.tone({ t: t + dt, f: F(-1), types: ['sine'], drop: 1.5, a: 0.01, h: 0.04, r: 0.4, peak: 0.25 })); break;
+      case 'timpani': this.tone({ t, f: F(-1), types: ['sine', 'sine'], mult: [1, 1.5], mix: [1, 0.3], drop: 1.3, a: 0.01, h: 0.1, r: 1.3, peak: 0.3 }); break;
       case 'cello': this.tone({ t, f: F(0), types: [saw, saw], dets: [-5, 5], a: 0.16, h: 0.7, r: 0.9, fc: 1200, peak: 0.11, vib: 10 }); break;
       case 'clarinet': this.tone({ t, f: F(1), types: ['square'], a: 0.06, h: 0.45, r: 0.5, fc: 1500, peak: 0.07 }); break;
       case 'oboe': this.tone({ t, f: F(1), types: [saw], ft: 'bandpass', fc: 1400, q: 2, a: 0.05, h: 0.45, r: 0.5, peak: 0.2, vib: 8 }); break;
@@ -633,14 +804,14 @@ const Sound = {
   heartbeat() {
     if (!this.on || !this.ctx) return;
     const t = this.ctx.currentTime + 0.02;
-    this.tone({ t, f: 52, types: ['sine'], drop: 1.8, a: 0.004, h: 0.03, r: 0.25, peak: 0.28 });
-    this.tone({ t: t + 0.19, f: 48, types: ['sine'], drop: 1.6, a: 0.004, h: 0.03, r: 0.22, peak: 0.18 });
+    this.tone({ t, f: 52, types: ['sine'], drop: 1.6, a: 0.01, h: 0.03, r: 0.3, peak: 0.12 });
+    this.tone({ t: t + 0.19, f: 48, types: ['sine'], drop: 1.5, a: 0.01, h: 0.03, r: 0.25, peak: 0.08 });
   },
   finale() {
     if (!this.on || !this.ctx) return;
     const t = this.ctx.currentTime + 0.05;
-    [0, 4, 7, 9, 12].forEach((k, i) => this.tone({ t: t + i * 0.06, f: this.freq(k, 0), types: ['sawtooth', 'triangle'], dets: [-6, 6], a: 0.3, h: 1.2, r: 2.2, fc: 1800, peak: 0.06, vib: 8 }));
-    this.tone({ t, f: this.freq(0, -1), types: ['sine'], drop: 1.5, a: 0.004, h: 0.1, r: 1.6, peak: 0.5 });
+    [0, 4, 7, 9, 12].forEach((k, i) => this.tone({ t: t + i * 0.35, f: this.freq(k, 0), types: ['sine', 'triangle'], mix: [1, 0.3], a: 0.8, h: 1.2, r: 3, peak: 0.08 }));
+    this.tone({ t, f: this.freq(0, -1), types: ['sine'], a: 0.5, h: 0.8, r: 2.5, peak: 0.12 });
   },
 };
 
@@ -1200,7 +1371,8 @@ function updateJet(sys, dt, spread, speed) {
 /* ------------------------------------------------------------------ */
 /* State, view, camera                                                 */
 /* ------------------------------------------------------------------ */
-const state = { view: 'external', selected: null, hovered: null, concert: null, quiz: null };
+const plateStage = $('#plate-stage'), plateEl = $('#plate');
+const state = { view: 'plate', selected: null, hovered: null, concert: null, quiz: null };
 let skinOpacity = 1, skinTarget = 1;
 const HOME = { target: new THREE.Vector3(0.2, 0.25, 0), dir: new THREE.Vector3(0.1, 0.22, 1).normalize(), dist: 11 };
 let fly = null;
@@ -1230,6 +1402,12 @@ function anchorWorld(id, out = new THREE.Vector3()) {
 
 function setView(v) {
   state.view = v;
+  const plate = v === 'plate';
+  plateStage.hidden = !plate;
+  squid.visible = !plate;
+  canvas.style.pointerEvents = plate ? 'none' : '';
+  if (plate) { ui.pin.hidden = true; ui.tip.hidden = true; state.hovered = null; }
+  else if (state.selected) ui.pin.hidden = false;
   document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   skinTarget = v === 'glass' ? 0.18 : 1;
   clipTarget = v === 'dissect' ? 0.0 : 1.4;
@@ -1272,6 +1450,33 @@ for (const p of PARTS) {
   });
 }
 
+const hsEls = {};
+{
+  const layer = $('#hotspots');
+  PARTS.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'hs' + (p.kind === 'int' ? ' int' : '');
+    b.style.left = `${(PLATE[p.id][0] / 1312) * 100}%`;
+    b.style.top = `${(PLATE[p.id][1] / 1199) * 100}%`;
+    b.style.setProperty('--d', `${(i * 0.37) % 2.8}s`);
+    b.setAttribute('aria-pressed', 'false');
+    b.setAttribute('aria-label', p.name);
+    const l = document.createElement('span'); l.className = 'hs-lbl'; l.textContent = p.name;
+    b.appendChild(l);
+    b.addEventListener('click', () => (state.quiz ? answer(p.id) : userSelect(p.id)));
+    layer.appendChild(b); hsEls[p.id] = b;
+  });
+  if (!reduceMotion) {
+    plateEl.addEventListener('pointermove', (e) => {
+      const r = plateEl.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      plateEl.style.setProperty('--ry', `${x * 10}deg`);
+      plateEl.style.setProperty('--rx', `${-y * 8}deg`);
+    });
+    plateEl.addEventListener('pointerleave', () => { plateEl.style.setProperty('--ry', '0deg'); plateEl.style.setProperty('--rx', '0deg'); });
+  }
+}
+
 function renderPanel(id, movementIdx) {
   if (!id) {
     ui.move.textContent = 'قبل العزف'; ui.count.textContent = '';
@@ -1308,11 +1513,14 @@ function select(id, { fly: doFly = true, sound = true, movement } = {}) {
   for (const [pid, el] of Object.entries(chipEls)) el.setAttribute('aria-pressed', String(pid === id));
   for (const [pid, el] of Object.entries(noteEls)) el.setAttribute('aria-pressed', String(pid === id));
   renderPanel(id, movement);
+  for (const [pid, el] of Object.entries(hsEls)) el.setAttribute('aria-pressed', String(pid === id));
+  plateEl.classList.toggle('focus', !!id);
+  if (id) { plateEl.style.setProperty('--sx', `${(PLATE[id][0] / 1312) * 100}%`); plateEl.style.setProperty('--sy', `${(PLATE[id][1] / 1199) * 100}%`); }
   if (!id) { ui.pin.hidden = true; return; }
   const p = PART[id];
   if (p.kind === 'int' && state.view === 'external') setView('dissect');
   ui.pinLabel.textContent = p.name;
-  ui.pin.hidden = false;
+  ui.pin.hidden = state.view === 'plate';
   if (sound) Sound.play(id);
   if (id === 'tentacles') strike = 0.001;
   if (doFly) {
@@ -1336,8 +1544,9 @@ const soundBtn = $('#sound');
 function setSound(on) {
   if (on && !Sound.init()) { soundBtn.textContent = 'الصوت غير مدعوم'; return; }
   Sound.on = on;
+  Sound.fade(on);
   soundBtn.setAttribute('aria-pressed', String(on));
-  soundBtn.textContent = on ? 'الصوت يعمل' : 'الصوت مغلق';
+  soundBtn.textContent = on ? 'صوت البحر يعمل' : 'الصوت مغلق';
 }
 soundBtn.addEventListener('click', () => setSound(!Sound.on));
 
@@ -1358,13 +1567,13 @@ function startConcert() {
   const step = 3900;
   const c = (state.concert = { timers: [] });
   playBtn.textContent = '■ إيقاف العزف';
-  setView('external');
+  if (state.view !== 'plate') setView('external');
   Object.values(noteEls).forEach((n) => n.classList.remove('done'));
   seq.forEach((s, i) => {
     c.timers.push(setTimeout(() => {
       if (state.concert !== c) return;
       if (i > 0) noteEls[seq[i - 1].id].classList.add('done');
-      if (PART[s.id].kind === 'int' && state.view !== 'dissect') setView('dissect');
+      if (PART[s.id].kind === 'int' && state.view !== 'dissect' && state.view !== 'plate') setView('dissect');
       select(s.id, { movement: s.mi });
     }, 600 + i * step));
   });
@@ -1391,7 +1600,7 @@ function nextQuestion() {
   $('#q-target').textContent = p.name;
   $('#q-fb').textContent = ''; $('#q-fb').className = 'fb';
   $('#q-score').textContent = `${arNum(q.right)} / ${arNum(q.total)}`;
-  if (p.kind === 'int') setView('dissect');
+  if (p.kind === 'int' && state.view !== 'plate') setView('dissect');
 }
 function startQuiz() {
   stopConcert();
@@ -1399,11 +1608,12 @@ function startQuiz() {
   quizBtn.setAttribute('aria-pressed', 'true');
   quizbar.hidden = false;
   select(null, { fly: false }); goHome();
-  setView('dissect');
+  if (state.view !== 'plate') setView('dissect');
+  plateEl.classList.add('quiz');
   nextQuestion();
 }
 function endQuiz() {
-  state.quiz = null; quizbar.hidden = true; quizBtn.setAttribute('aria-pressed', 'false');
+  state.quiz = null; quizbar.hidden = true; plateEl.classList.remove('quiz'); quizBtn.setAttribute('aria-pressed', 'false');
 }
 function answer(id) {
   const q = state.quiz; if (!q || q.locked) return;
@@ -1428,6 +1638,7 @@ $('#q-end').addEventListener('click', endQuiz);
 const ray = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 function pick(clientX, clientY) {
+  if (state.view === 'plate') return null;
   const r = canvas.getBoundingClientRect();
   ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ndc, camera);
@@ -1484,6 +1695,7 @@ new ResizeObserver(resize).observe(canvas);
 new ResizeObserver(resize).observe($('#panel'));
 resize();
 goHome(true);
+setView('plate');
 
 /* ------------------------------------------------------------------ */
 /* Loop                                                                */
@@ -1608,7 +1820,7 @@ function tick() {
     anchorWorld(state.selected, _v).project(camera);
     const w = canvas.clientWidth, h = canvas.clientHeight;
     const x = (_v.x * 0.5 + 0.5) * w, y = (-_v.y * 0.5 + 0.5) * h;
-    ui.pin.hidden = _v.z > 1;
+    ui.pin.hidden = _v.z > 1 || state.view === 'plate';
     ui.pin.style.transform = `translate(${x}px, ${y}px)`;
   }
   requestAnimationFrame(tick);
