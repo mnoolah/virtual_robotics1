@@ -115,6 +115,22 @@
   .pin-label { position: absolute; left: 0; bottom: 58px; transform: translateX(-50%); padding: 3px 12px 5px; border-radius: 8px; background: rgba(4, 23, 34, 0.85); font-family: var(--display); font-size: 19px; white-space: nowrap; direction: rtl; }
   .tip { position: absolute; left: 0; top: 0; padding: 4px 10px; border-radius: 8px; background: rgba(238, 245, 242, 0.95); color: var(--abyss); font-size: 13px; font-weight: 600; pointer-events: none; white-space: nowrap; direction: rtl; }
 
+  /* video of the swimming squid */
+  .film { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 50% 20%, #1d6580, #062331 60%, #03141e); cursor: pointer; }
+  .film.exploring { cursor: default; }
+  .film-inner { position: absolute; transform-origin: 0 0; transition: transform 1s cubic-bezier(.65,0,.35,1); will-change: transform; }
+  .film video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .spots { position: absolute; inset: 0; transition: opacity 0.4s; }
+  .film:not(.exploring) .spots { opacity: 0; pointer-events: none; }
+  .hs { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; transform: scale(calc(1 / var(--z, 1))); transition: transform 1s cubic-bezier(.65,0,.35,1); }
+  .hs::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: rgba(238, 245, 242, 0.95); box-shadow: 0 0 0 3px rgba(3, 18, 28, 0.35); animation: breathe 2.8s ease-in-out infinite; animation-delay: var(--d, 0s); }
+  .hs.int::before { background: var(--shell); }
+  .hs-lbl { position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); padding: 3px 10px 4px; border-radius: 8px; background: rgba(3, 18, 28, 0.86); font-family: var(--display); font-size: 17px; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .hs:hover .hs-lbl, .hs:focus-visible .hs-lbl, .hs[aria-pressed="true"] .hs-lbl { opacity: 1; }
+  .hs[aria-pressed="true"]::before { inset: 7px; background: var(--coral); box-shadow: 0 0 0 3px rgba(3, 18, 28, 0.4), 0 0 18px 5px rgba(240, 138, 104, 0.75); }
+  @keyframes breathe { 0%, 100% { box-shadow: 0 0 0 3px rgba(3, 18, 28, 0.35), 0 0 0 0 rgba(238, 245, 242, 0.5); } 50% { box-shadow: 0 0 0 3px rgba(3, 18, 28, 0.35), 0 0 0 9px rgba(238, 245, 242, 0); } }
+  .resume { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 76px); }
+  @media (prefers-reduced-motion: reduce) { .film-inner, .hs { transition: none; } .hs::before { animation: none; } }
   .ref { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(2, 12, 18, 0.82); backdrop-filter: blur(6px); padding: 24px 16px; }
   .ref figure { margin: 0; display: grid; gap: 10px; max-width: min(760px, 100%); }
   .ref img { width: 100%; max-height: calc(100vh - 140px); object-fit: contain; border-radius: 14px; }
@@ -131,11 +147,20 @@
     .card h2 { font-size: 26px; }
     .parts { inset-inline: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
     .hint { bottom: calc(env(safe-area-inset-bottom, 0px) + 70px); font-size: 12.5px; }
+    .resume { bottom: calc(env(safe-area-inset-bottom, 0px) + 68px); }
+    .film video { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent); }
+    .hs-lbl { font-size: 15px; }
   }
 </style>
 
 <div id="app" dir="rtl" lang="ar">
   <canvas id="scene" aria-label="مجسم ثلاثي الأبعاد لحبّار مشرّح يمكن تدويره والضغط على أجزائه"></canvas>
+  <div class="film" id="film">
+    <div class="film-inner" id="film-inner">
+      <video id="vid" muted playsinline loop autoplay preload="auto" poster="squid-frame.webp" aria-label="فيديو لحبّار مشرّح يسبح فوق الشعاب"><source src="squid-swim.mp4" type="video/mp4"></video>
+      <div class="spots" id="spots"></div>
+    </div>
+  </div>
   <div class="pin" id="pin" hidden><span class="pin-line"></span><span class="pin-dot"></span><span class="pin-label" id="pin-label"></span></div>
   <div class="tip" id="tip" hidden></div>
 
@@ -146,13 +171,13 @@
     </div>
     <div class="controls">
       <div class="seg" role="group" aria-label="طريقة العرض">
-        <button type="button" data-view="dissect" aria-pressed="true">تشريح</button>
+        <button type="button" data-view="film" aria-pressed="true">الفيديو</button>
+        <button type="button" data-view="dissect" aria-pressed="false">تشريح</button>
         <button type="button" data-view="external" aria-pressed="false">خارجي</button>
         <button type="button" data-view="glass" aria-pressed="false">شفاف</button>
       </div>
       <button type="button" class="btn primary" id="tour">جولة هادئة</button>
       <button type="button" class="btn" id="sound" aria-pressed="false">صوت البحر</button>
-      <button type="button" class="btn" id="ref-open">الصورة المرجعية</button>
     </div>
   </header>
 
@@ -164,15 +189,9 @@
     <div class="fact"><b>هل تعلم؟</b><p id="c-fact"></p></div>
   </aside>
 
-  <div class="hint" id="hint">اسحب للتدوير · اضغط على أي جزء لتتعرّف عليه</div>
+  <div class="hint" id="hint">اضغط على الحبّار لإيقافه واستكشاف أجزائه</div>
+  <button type="button" class="btn primary resume" id="resume" hidden>▶ تابع السباحة</button>
   <nav class="parts" id="parts" aria-label="أجزاء الحبّار"></nav>
-
-  <div class="ref" id="ref" hidden>
-    <figure>
-      <img src="squid-plate.webp" alt="الصورة المرجعية: حبّار يسبح تحت الماء ونصف ردائه مكشوف فتظهر أعضاؤه الداخلية">
-      <figcaption><span>الصورة التي بُني المجسم على مثالها</span><button type="button" class="btn" id="ref-close">إغلاق</button></figcaption>
-    </figure>
-  </div>
 
   <div class="loading" id="loading">جارٍ تجهيز الحبّار…</div>
 </div>
@@ -279,6 +298,14 @@ const PARTS = [
     fact: 'سُمّي «القلم» لأنه يشبه ريشة الكتابة الشفافة.',
     anchor: [3.0, 0.72, 0.05], cam: { dir: [0.1, 0.9, 0.7], dist: 5.4 } },
 ];
+// organ positions on the paused video frame (1280 x 720, at FREEZE seconds)
+const FREEZE = 0.5, VW = 1280, VH = 720;
+const FILM = {
+  mantle: [905, 382], fins: [1150, 268], siphon: [660, 402], skin: [560, 318], eyes: [630, 350],
+  arms: [440, 425], tentacles: [100, 488], beak: [694, 345],
+  digestive: [870, 272], ink: [925, 300], stomach: [1088, 234], caecum: [962, 243], gonad: [1032, 208],
+  gills: [790, 245], heart: [792, 318], branchial: [748, 306], axon: [700, 226], brain: [612, 288], gladius: [980, 186],
+};
 const PART = Object.fromEntries(PARTS.map((p) => [p.id, p]));
 
 /* ------------------------------------------------------------------ */
@@ -323,7 +350,10 @@ const Sound = {
       if (p) { p.pan.value = pan; g.connect(p); p.connect(this.sea); } else g.connect(this.sea);
       src.start(0, phase); lfo.start(ctx.currentTime + phase);
     };
-    wave(-0.55, 0.075, 0); wave(0.55, 0.061, 3.3); wave(0, 0.043, 5.1);
+    fetch('squid-sea.m4a').then((r) => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+      .then((b) => ctx.decodeAudioData(b))
+      .then((buf) => { const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; const g = ctx.createGain(); g.gain.value = 1.1; src.connect(g); g.connect(this.sea); src.start(); })
+      .catch(() => { wave(-0.55, 0.075, 0); wave(0.55, 0.061, 3.3); wave(0, 0.043, 5.1); });
     this.loops();
     return true;
   },
@@ -933,7 +963,7 @@ function updateJet(sys, dt, spread, speed) {
 /* ------------------------------------------------------------------ */
 /* View, camera, selection                                             */
 /* ------------------------------------------------------------------ */
-const state = { view: 'dissect', selected: null, hovered: null, tour: null };
+const state = { view: 'film', exploring: false, selected: null, hovered: null, tour: null };
 let skinOpacity = 1, skinTarget = 1;
 const HOME = { target: new THREE.Vector3(0.4, 0.5, 0), dir: new THREE.Vector3(0.05, 0.12, 1).normalize() };
 let fly = null;
@@ -957,8 +987,16 @@ function anchorWorld(id, out = new THREE.Vector3()) {
   if (id === 'fins') return fins[0].localToWorld(out.set(5.4, 1.2, 0));
   return squid.localToWorld(out.set(...PART[id].anchor));
 }
+const film = $('#film'), filmInner = $('#film-inner'), vid = $('#vid'), resumeBtn = $('#resume');
 function setView(v) {
+  const wasFilm = state.view === 'film';
   state.view = v;
+  const isFilm = v === 'film';
+  film.hidden = !isFilm;
+  canvas.style.visibility = isFilm ? 'hidden' : '';
+  if (isFilm) { ui.pin.hidden = true; ui.tip.hidden = true; if (!state.exploring) vid.play().catch(() => {}); }
+  else { vid.pause(); if (wasFilm && state.selected) { ui.pin.hidden = false; const id = state.selected; state.selected = null; select(id); } }
+  updateHintUI();
   document.querySelectorAll('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   skinTarget = v === 'glass' ? 0.2 : 1;
   cutTarget = v === 'dissect' ? 0.06 : 1.2;
@@ -985,7 +1023,10 @@ const chipEls = {};
 function select(id, { doFly = true } = {}) {
   state.selected = id;
   for (const [pid, el] of Object.entries(chipEls)) el.setAttribute('aria-pressed', String(pid === id));
-  ui.card.hidden = !id; ui.hint.hidden = !!id; ui.pin.hidden = !id;
+  for (const [pid, el] of Object.entries(spotEls)) el.setAttribute('aria-pressed', String(pid === id));
+  ui.card.hidden = !id; ui.pin.hidden = !id || state.view === 'film';
+  if (id && state.view === 'film' && !state.exploring) explore(true);
+  updateHintUI();
   resize();
   if (!id) return;
   const p = PART[id];
@@ -993,18 +1034,19 @@ function select(id, { doFly = true } = {}) {
   ui.kind.className = 'kind' + (p.kind === 'int' ? ' int' : '');
   ui.name.textContent = p.name; ui.latin.textContent = p.latin; ui.desc.textContent = p.desc; ui.fact.textContent = p.fact;
   ui.pinLabel.textContent = p.name;
-  if (p.view === 'glass' && state.view !== 'glass') setView('glass');
-  else if (p.view === 'dissect' && state.view === 'external') setView('dissect');
+  const film3d = state.view !== 'film';
+  if (film3d && p.view === 'glass' && state.view !== 'glass') setView('glass');
+  else if (film3d && p.view === 'dissect' && state.view === 'external') setView('dissect');
   if (id === 'tentacles') strike = 0.001;
   Sound.play(id);
-  if (doFly) {
+  if (doFly && state.view !== 'film') {
     const tgt = anchorWorld(id);
     flyTo(tgt, tgt.clone().addScaledVector(new THREE.Vector3(...p.cam.dir).normalize(), p.cam.dist * 1.35 * (fitDistance() / 15.5)), 1.4);
   }
   chipEls[id].scrollIntoView({ block: 'nearest', inline: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
 }
 function userSelect(id) { stopTour(); select(id); }
-$('#c-close').addEventListener('click', () => { stopTour(); select(null); goHome(); });
+$('#c-close').addEventListener('click', () => { stopTour(); select(null); if (state.view !== 'film') goHome(); });
 document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
 
 const soundBtn = $('#sound');
@@ -1026,16 +1068,61 @@ function startTour() {
   if (!Sound.on) setSound(true);
   const timers = (state.tour = []);
   tourBtn.textContent = 'إيقاف الجولة';
-  setView('external');
+  if (state.view !== 'film') setView('external');
   TOUR.forEach((id, i) => timers.push(setTimeout(() => state.tour === timers && select(id), 500 + i * 5200)));
-  timers.push(setTimeout(() => { if (state.tour !== timers) return; select(null); setView('dissect'); goHome(); stopTour(); }, 500 + TOUR.length * 5200));
+  timers.push(setTimeout(() => { if (state.tour !== timers) return; select(null); if (state.view !== 'film') { setView('dissect'); goHome(); } else explore(false); stopTour(); }, 500 + TOUR.length * 5200));
 }
 tourBtn.addEventListener('click', () => (state.tour ? stopTour() : startTour()));
 
-$('#ref-open').addEventListener('click', () => { $('#ref').hidden = false; $('#ref-close').focus(); });
-$('#ref-close').addEventListener('click', () => { $('#ref').hidden = true; });
-$('#ref').addEventListener('click', (e) => { if (e.target.id === 'ref') $('#ref').hidden = true; });
-addEventListener('keydown', (e) => { if (e.key === 'Escape') $('#ref').hidden = true; });
+// ---- video mode: swim, pause to explore, zoom to a part
+const spotEls = {};
+PARTS.forEach((p, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'hs' + (p.kind === 'int' ? ' int' : '');
+  b.style.left = `${(FILM[p.id][0] / VW) * 100}%`; b.style.top = `${(FILM[p.id][1] / VH) * 100}%`;
+  b.style.setProperty('--d', `${(i * 0.37) % 2.8}s`);
+  b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', p.name);
+  const l = document.createElement('span'); l.className = 'hs-lbl'; l.textContent = p.name; b.appendChild(l);
+  b.addEventListener('click', (e) => { e.stopPropagation(); userSelect(p.id); });
+  $('#spots').appendChild(b); spotEls[p.id] = b;
+});
+function updateHintUI() {
+  const f = state.view === 'film';
+  resumeBtn.hidden = !(f && state.exploring);
+  ui.hint.hidden = !!state.selected || (f && state.exploring);
+  ui.hint.textContent = f ? 'اضغط على الحبّار لإيقافه واستكشاف أجزائه' : 'اسحب للتدوير · اضغط على أي جزء لتتعرّف عليه';
+}
+function explore(on) {
+  state.exploring = on;
+  film.classList.toggle('exploring', on);
+  if (on) { vid.pause(); try { vid.currentTime = FREEZE; } catch (e) {} }
+  else { if (state.selected) select(null); vid.play().catch(() => {}); }
+  updateHintUI();
+}
+film.addEventListener('click', () => { if (!state.exploring) { stopTour(); explore(true); } });
+resumeBtn.addEventListener('click', () => { stopTour(); explore(false); });
+function layoutFilm() {
+  const W = innerWidth, H = innerHeight;
+  const topB = document.querySelector('.top').getBoundingClientRect().bottom;
+  const partsT = $('#parts').getBoundingClientRect().top;
+  let s, x0, y0;
+  if (W / H > 1.1) { s = Math.max(W / VW, H / VH); x0 = (W - VW * s) / 2; y0 = (H - VH * s) / 2; }
+  else { s = (W * 1.12) / VW; x0 = (W - VW * s) / 2; y0 = topB + (partsT - topB - VH * s) / 2; }
+  Object.assign(filmInner.style, { left: `${x0}px`, top: `${y0}px`, width: `${VW * s}px`, height: `${VH * s}px` });
+  let z = 1, tx = 0, ty = 0;
+  if (state.selected) {
+    z = W > 760 ? 1.9 : 1.7;
+    let cx = W / 2, cy = (topB + partsT) / 2;
+    if (!ui.card.hidden) {
+      const c = ui.card.getBoundingClientRect();
+      if (W > 760) cx = (18 + c.left - 18) / 2; else cy = (topB + c.top) / 2;
+    }
+    const [u, v] = FILM[state.selected];
+    tx = cx - x0 - z * u * s; ty = cy - y0 - z * v * s;
+  }
+  filmInner.style.transform = `translate(${tx}px, ${ty}px) scale(${z})`;
+  filmInner.style.setProperty('--z', z);
+}
 
 // picking (ignores skin that the cutaway has removed)
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), _lp = new THREE.Vector3();
@@ -1075,10 +1162,12 @@ function resize() {
   else if (!ui.card.hidden) sy = (h - ui.card.getBoundingClientRect().top - top.bottom) / 2;
   camera.setViewOffset(w, h, sx, sy, w, h);
   camera.updateProjectionMatrix();
+  layoutFilm();
 }
 new ResizeObserver(resize).observe(canvas);
 resize();
 goHome(true);
+setView('film');
 
 /* ------------------------------------------------------------------ */
 /* Loop                                                                */
@@ -1093,6 +1182,7 @@ function setEmissive(id, on, k) {
   });
 }
 function tick() {
+  if (state.view === 'film') { clock.getDelta(); requestAnimationFrame(tick); return; }
   const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime, mo = reduceMotion ? 0.2 : 1;
   frame++;
   if (fly) {
