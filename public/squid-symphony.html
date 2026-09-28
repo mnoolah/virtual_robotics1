@@ -350,7 +350,7 @@ const Sound = {
       if (p) { p.pan.value = pan; g.connect(p); p.connect(this.sea); } else g.connect(this.sea);
       src.start(0, phase); lfo.start(ctx.currentTime + phase);
     };
-    fetch('squid-sea.m4a').then((r) => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+    fetch('squid-sea.mp3').then((r) => { if (!r.ok) throw 0; return r.arrayBuffer(); })
       .then((b) => ctx.decodeAudioData(b))
       .then((buf) => { const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; const g = ctx.createGain(); g.gain.value = 1.1; src.connect(g); g.connect(this.sea); src.start(); })
       .catch(() => { wave(-0.55, 0.075, 0); wave(0.55, 0.061, 3.3); wave(0, 0.043, 5.1); });
